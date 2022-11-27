@@ -56,6 +56,7 @@ function main {
   echo "";
   echo "[A] Remove Node";
   echo "[B] Upgrade Node";
+  echo "[X] Helpful commands";
   echo "";
   read -p "[SELECT] > " input
 
@@ -102,6 +103,10 @@ function main {
       ;;
     "B")
       upgradeNode
+      exit 0
+      ;;
+    "X")
+      helpfullCommand
       exit 0
       ;;
     *)
@@ -474,6 +479,28 @@ function upgradeNode() {
   echo "\e[1m\e[32mRun command to check log: sudo journalctl -u $NODE_SERVICE_NAME -f -o cat \e[0m"
 }
 
+function helpfullCommand() {
+  echo "Check log:"
+  echo "sudo journalctl -u $NODE_SERVICE_NAME -f -o cat"
+  echo ""
+  echo "Check sync status:"
+  echo "curl -s localhost:${NODE_PORT}657/status | jq -r .result.sync_info"
+  echo ""
+  echo "Unjail validator:"
+  echo "$NODE_DAEMON tx slashing unjail --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --fees 10000$NODE_DENOM -y"
+  echo ""
+  echo "Withdraw reward and commission:"
+  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
+  echo "$NODE_DAEMON tx distribution withdraw-rewards $VALIDATOR_ADDRESS --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --commission -y"
+  echo ""
+  echo "Delegate:"
+  echo "$NODE_DAEMON tx staking delegate $VALIDATOR_ADDRESS 1000000$NODE_DENOM --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 -y"
+  echo ""
+  echo "Vote proposal X"
+  echo "$NODE_DAEMON tx gov vote X yes|no|abstain|nowithveto --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 -y"
+  echo ""
+}
+
 
 function checksum() {
   NODE_FOLDER=.gitopia
@@ -506,5 +533,5 @@ main
 # checkProfile
 
 # Run
-# On Mac: sh gitopia.sh
-# On Ubuntu: . ./gitopia.sh (dot space dot slash)
+# On Mac: sh node-tool.sh
+# On Ubuntu: ./node-tool.sh
