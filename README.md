@@ -17,8 +17,8 @@ sh gitopia.sh
 ```
 - Select action by number to install your node following step by step as below:
 
- **Remember to write your mnemonic phrase in a safe place **
- **It is the only way to recover your account if you ever forget your password.**
+ **Remember to write your mnemonic phrase in a safe place 
+ It is the only way to recover your account if you ever forget your password.**
 
 
   ```
@@ -34,12 +34,12 @@ sh gitopia.sh
   ```
 
 
-You have to do some step before run `[7] Create validator ` as below:
-- You have to wait for your node sync to latest block. 
-- You can check status by this command: `curl -s localhost:60657/status | jq -r .result.sync_info`
-- You need to go to discord or faucet page to get the faucet first and then you run step `[7] Create validator ` 
+- You have to do some step before run `[7] Create validator ` as below:
+ 1.You have to wait for your node sync to latest block. 
+ 2.You can check status by this command: `curl -s localhost:60657/status | jq -r .result.sync_info`
+ 3.You need to go to discord or faucet page to get the faucet first and then you run step `[7] Create validator ` 
 
-This is step for you in case want to remove or upgrade your node:
+- This is step for you in case want to remove or upgrade your node:
 
   ```
   [A] Remove Node
