@@ -10,12 +10,12 @@ Download sript: https://github.com/tcnetworkio/validator.tcnetwork.io
 
 ### 2. Running script
 
-- Copy the script and run it on your server.
+Copy the script and run it on your server.
 Example:
 ```sh
 sh gitopia.sh
 ```
-- Select action by number to install your node following step by step as below:
+Select action by number to install your node following step by step as below:
 
  **Remember to write your mnemonic phrase in a safe place, 
  It is the only way to recover your account if you ever forget your password.**
@@ -39,7 +39,7 @@ You have to do some step before run `[7] Create validator ` as below:
  - You can check status by this command: `curl -s localhost:60657/status | jq -r .result.sync_info`
  - You need to go to discord or faucet page to get the faucet first and then you run step `[7] Create validator ` 
 
-- This is step for you in case want to remove or upgrade your node:
+This is step for you in case want to remove or upgrade your node:
 
   ```
   [A] Remove Node
