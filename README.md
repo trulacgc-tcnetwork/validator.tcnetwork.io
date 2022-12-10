@@ -6,7 +6,7 @@ This repo provides shell scripts for setting up node automatically just by one-c
 
 ### 1. Download script
 
-Download sript: <https://github.com/tcnetworkio/validator.tcnetwork.io/tree/main/node>
+Download sript from: <https://github.com/tcnetworkio/validator.tcnetwork.io/tree/main/node>
 
 ### 2. Running script
 
@@ -22,7 +22,7 @@ Select action by number to install your node following step by step as below:
 **Remember to write your mnemonic phrase in a safe place,
  It is the only way to recover your account if you ever forget your password.**
 
-  ```js
+  ```txt
   [1] Install Library Dependencies
   [2] Install Go
   [3] Install Node
@@ -42,7 +42,7 @@ You have to do some step before run `[7] Create validator` as below:
 
 This is step for you in case want to remove or upgrade your node:
 
-  ```js
+  ```txt
   [A] Remove Node
   [B] Upgrade Node
   ```
