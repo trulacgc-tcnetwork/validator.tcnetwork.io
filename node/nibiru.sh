@@ -1,24 +1,24 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.18.5
+GO_VERSION=1.19.4
 
 # Node
-NODE_VERSION=v0.0.1
-NODE_REPO=https://github.com/OllO-Station/ollo.git
-NODE_REPO_FOLDER=ollo
-NODE_DAEMON=ollod
-NODE_ID=ollo-testnet-1
-NODE_DENOM=utollo
-NODE_FOLDER=.ollo
+NODE_REPO=https://github.com/NibiruChain/nibiru.git
+NODE_VERSION=v0.16.2
+NODE_REPO_FOLDER=nibiru
+NODE_DAEMON=nibid
+NODE_ID=nibiru-testnet-2
+NODE_DENOM=unibi
+NODE_FOLDER=.nibid
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://raw.githubusercontent.com/OllO-Station/networks/master/ollo-testnet-1/genesis.json
-NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
+NODE_GENESIS_FILE=https://rpc.testnet-2.nibiru.fi/genesis
+NODE_GENESIS_CHECKSUM=5cedb9237c6d807a89468268071647649e90b40ac8cd6d1ded8a72323144880d
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Ollo/addrbook.json
+NODE_ADDR_BOOK_FILE=https://snapshots3-testnet.nodejumper.io/nibiru-testnet/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=ollo
+NODE_SERVICE_NAME=nibiru
 
 # Validator
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots.kjnodes.com/ollo-testnet/snapshot_latest.tar.lz4
+SNAPSHOT_PATH=
 
 # Upgrade
 UPGRADE_PATH=
@@ -210,7 +210,7 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
+    curl -s $NODE_GENESIS_FILE | jq -r .result.genesis > $HOME/$NODE_FOLDER/config/genesis.json
   fi
 
   # Checksum Genesis
@@ -232,11 +232,11 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS=""
+  SEEDS="dabcc13d6274f4dd86fd757c5c4a632f5062f817@seed-2.nibiru-testnet-2.nibiru.fi:26656,a5383b33a6086083a179f6de3c51434c5d81c69d@seed-1.nibiru-testnet-2.nibiru.fi:26656"
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS="a99fc4e81770ca32d574cac2e8680dccc9b55f74@18.144.61.148:26656,70ba32724461c7ed4ec8d6ddc8b5e0b1cfb9e237@54.219.57.63:26656,7864a2e4b42e5af76a83a8b644b9172fa1e40fa5@52.8.174.235:26656"
+  PEERS=""
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -262,7 +262,7 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.025$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -379,7 +379,7 @@ function createValidator() {
   echo ""
   echo -e "\e[1m\e[32mCreating Valdiator Tx with wallet $NODE_WALLET... \e[0m" && sleep 1
 
-  $NODE_DAEMON tx staking create-validator \
+  $NODE_DAEMON nibid tx staking create-validator \
   --amount=1000000$NODE_DENOM \
   --pubkey=$($NODE_DAEMON tendermint show-validator) \
   --from="$NODE_WALLET" \
@@ -392,8 +392,9 @@ function createValidator() {
   --website="$YOUR_WEBSITE" \
   --identity "$YOUR_IDENTITY" \
   --min-self-delegation="1000000" \
-  --gas-prices="0.001$NODE_DENOM" \
-  --node=tcp://127.0.0.1:${NODE_PORT}657
+  --gas-prices="0.025$NODE_DENOM" \
+  --gas="250000" \
+  --node=tcp://127.0.0.1:${NODE_PORT}657 
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
 }
@@ -476,8 +477,8 @@ function upgradeNode() {
   sudo systemctl status $NODE_SERVICE_NAME
 
   echo -e "\e[1m\e[32Upgrading node... \e[0m" && sleep 1
-  sudo rm $HOME/go/bin/$NODE_DAEMON
-  sudo mv $HOME/upgrade/bin/$NODE_DAEMON $HOME/go/bin
+  sudo rm /usr/local/bin/$NODE_DAEMON
+  sudo mv $HOME/upgrade/bin/$NODE_DAEMON /usr/local/bin
   sudo rm -rf $HOME/upgrade
 
   echo -e "\e[1m\e[32Restarting node... \e[0m" && sleep 1
@@ -488,6 +489,8 @@ function upgradeNode() {
 }
 
 function helpfullCommand() {
+  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
+
   echo "Check log:"
   echo "sudo journalctl -u $NODE_SERVICE_NAME -f -o cat"
   echo ""
@@ -498,7 +501,6 @@ function helpfullCommand() {
   echo "$NODE_DAEMON tx slashing unjail --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --fees 10000$NODE_DENOM -y"
   echo ""
   echo "Withdraw reward and commission:"
-  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
   echo "$NODE_DAEMON tx distribution withdraw-rewards $VALIDATOR_ADDRESS --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --commission -y"
   echo ""
   echo "Delegate:"
@@ -542,4 +544,11 @@ main
 
 # Run:
 # On Mac: sh node-tool.sh
-# On Ubuntu: ./node-tool.sh
+# On Ubuntu: sudo chmod +x node-tool.sh && ./node-tool.sh
+
+# FAUCET_URL="https://faucet.testnet-2.nibiru.fi/"
+# ADDR="nibi1pzfy45z6ysd9c0fp83fczt6zhusulr45vcxww3" # X MUN
+# ADDR="nibi15a6my3yy7re9aspur592pdw0wdd4fvxakk92pz" #   Defund
+# ADDR="nibi1xr5980r6e7cy3u3pfm5xq2ruh5d3xy6akafmp0" #   Gitopia
+# ADDR="nibi16re2zprhnekq62qmcuh7v0dxtsa7le3n3s49ke" # X HyperSign
+# curl -X POST -d '{"address": "'"$ADDR"'", "coins": ["10000000unibi","100000000000unusd"]}' $FAUCET_URL

@@ -21,7 +21,7 @@ NODE_ADDR_BOOK_FILE=
 NODE_SERVICE_NAME=gitopia
 
 # Validator
-VALIDATOR_DETAIL="A group of technical developers participating in Cosmos blockchains, providing staking services and supporting Cosmos community"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
