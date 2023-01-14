@@ -1,24 +1,23 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.18.5
+GO_VERSION=1.18
 
 # Node
-NODE_VERSION=v0.0.1
-NODE_REPO=https://github.com/OllO-Station/ollo.git
-NODE_REPO_FOLDER=ollo
-NODE_DAEMON=ollod
-NODE_ID=ollo-testnet-1
-NODE_DENOM=utollo
-NODE_FOLDER=.ollo
+NODE_REPO=
+NODE_VERSION=v0.4.0
+NODE_REPO_FOLDER=
+NODE_DAEMON=lavad
+NODE_ID=lava-testnet-1
+NODE_DENOM=ulava
+NODE_FOLDER=.lava
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://raw.githubusercontent.com/OllO-Station/networks/master/ollo-testnet-1/genesis.json
-NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
+NODE_GENESIS_FILE=https://raw.githubusercontent.com/K433QLtr6RA9ExEq/GHFkqmTzpdNLDd6T/main/testnet-1/genesis_json/genesis.json
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Ollo/addrbook.json
+NODE_ADDR_BOOK_FILE=https://snapshots1-testnet.nodejumper.io/lava-testnet/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=ollo
+NODE_SERVICE_NAME=lava
 
 # Validator
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
@@ -26,11 +25,11 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots.kjnodes.com/ollo-testnet/snapshot_latest.tar.lz4
+SNAPSHOT_PATH=https://snapshots1-testnet.nodejumper.io/lava-testnet/lava-testnet-1_2023-01-07.tar.lz4
 
 # Upgrade
-UPGRADE_PATH=
-UPGRADE_FILE=
+UPGRADE_PATH=https://github.com/lavanet/lava/releases/download/v0.4.3
+UPGRADE_FILE=lavad-v0.4.3-linux-amd64
 
 
 function main {
@@ -161,10 +160,9 @@ function installNode() {
   echo -e "\e[1m\e[32mInstalling Node... \e[0m" && sleep 1
   cd $HOME
 
-  git clone $NODE_REPO
-  cd $NODE_REPO_FOLDER 
-  git checkout $NODE_VERSION
-  make install
+  curl -L https://lava-binary-upgrades.s3.amazonaws.com/testnet/$NODE_VERSION/$NODE_DAEMON > $NODE_DAEMON
+  chmod +x $NODE_DAEMON
+  sudo mv $NODE_DAEMON /usr/local/bin/$NODE_DAEMON
 
   echo -e "\e[1m\e[32mInstalling Node finished. \e[0m" && sleep 1
 }
@@ -210,16 +208,9 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
+    curl -s $NODE_GENESIS_FILE > $HOME/$NODE_FOLDER/config/genesis.json
   fi
 
-  # Checksum Genesis
-  if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
-    echo "Genesis checksum is match"
-  else
-    echo "Genesis checksum is not match"
-    return 1
-  fi
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
@@ -232,11 +223,11 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS=""
+  SEEDS="3a445bfdbe2d0c8ee82461633aa3af31bc2b4dc0@prod-pnet-seed-node.lavanet.xyz:26656,e593c7a9ca61f5616119d6beb5bd8ef5dd28d62d@prod-pnet-seed-node2.lavanet.xyz:26656"
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS="a99fc4e81770ca32d574cac2e8680dccc9b55f74@18.144.61.148:26656,70ba32724461c7ed4ec8d6ddc8b5e0b1cfb9e237@54.219.57.63:26656,7864a2e4b42e5af76a83a8b644b9172fa1e40fa5@52.8.174.235:26656"
+  PEERS=""
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -262,7 +253,7 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.025$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -488,6 +479,8 @@ function upgradeNode() {
 }
 
 function helpfullCommand() {
+  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
+
   echo "Check log:"
   echo "sudo journalctl -u $NODE_SERVICE_NAME -f -o cat"
   echo ""
@@ -498,7 +491,6 @@ function helpfullCommand() {
   echo "$NODE_DAEMON tx slashing unjail --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --fees 10000$NODE_DENOM -y"
   echo ""
   echo "Withdraw reward and commission:"
-  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
   echo "$NODE_DAEMON tx distribution withdraw-rewards $VALIDATOR_ADDRESS --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --commission -y"
   echo ""
   echo "Delegate:"
@@ -542,4 +534,4 @@ main
 
 # Run:
 # On Mac: sh node-tool.sh
-# On Ubuntu: ./node-tool.sh
+# On Ubuntu: sudo chmod +x node.sh && ./node.sh
