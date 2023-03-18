@@ -1,17 +1,30 @@
 #!/usr/bin/env bash
 
 function main {
-  echo -e "What would you like to install:\n\n1) Docker\n2) Restake\n (ex: \"1\" or \"Docker\"):"
-  read input
+  echo "What would you like to install:"
+  echo "1) Install Docker"
+  echo "2) Install Restake"
+  echo "3) Remove Docker"
+  echo "4) Remove Restake"
+  read -p "[SELECT] (ex: \"1\" or \"Install Docker\") > " input
 
   case $input in
-    "1" | "Docker")
+    "1" | "Install Docker")
       installDocker
       exit 0
       ;;
 
-    "2" | "Restake")
+    "2" | "Install Restake")
       installRestake
+      exit 0
+      ;;
+    
+    "3" | "Remove Docker")
+      removeDocker
+      exit 0
+      ;;
+    "4" | "Remove Restake")
+      removeRestake
       exit 0
       ;;
     
@@ -123,4 +136,40 @@ EOF
   
 }
 
+function removeDocker {
+  # Install Docker
+  echo -e "\e[1m\e[32mRemoving Docker... \e[0m" && sleep 1
+
+  sudo apt-get purge docker-ce docker-ce-cli containerd.io
+}
+
+function removeRestake {
+  echo -e "\e[1m\e[32mRemoving Restake... \e[0m" && sleep 1
+ 
+  if [ -f "/etc/systemd/system/restake.service" ]; then
+    echo "Stop and remove restake.service..."
+    sudo systemctl stop restake.service
+    sudo systemctl disable restake.service
+    sudo rm /etc/systemd/system/restake.service
+  fi
+
+  if [ -f "/etc/systemd/system/restake.timer" ]; then
+    echo "Stop and remove restake.timer..."
+    sudo systemctl stop restake.timer
+    sudo systemctl disable restake.timer
+    sudo rm /etc/systemd/system/restake.timer
+  fi
+
+  echo "Removing Restake repo folder..."
+  if [ -d "$HOME/restake" ]; then
+    sudo rm -rf $HOME/restake
+  fi
+  
+  echo -e "\e[1m\e[32mRemove Restake successful. \e[0m" && sleep 1
+}
+
 main
+
+# Run:
+# On Mac: sh setup.sh
+# On Ubuntu: sudo chmod +x setup.sh && ./setup.sh
