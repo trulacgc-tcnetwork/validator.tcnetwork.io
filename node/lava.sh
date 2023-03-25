@@ -28,9 +28,8 @@ VALIDATOR_IDENTITY=C149D23D5257C23C
 SNAPSHOT_PATH=https://snapshots1-testnet.nodejumper.io/lava-testnet/lava-testnet-1_2023-01-07.tar.lz4
 
 # Upgrade
-UPGRADE_PATH=https://github.com/lavanet/lava/releases/download/v0.4.3
-UPGRADE_FILE=lavad-v0.4.3-linux-amd64
-
+UPGRADE_PATH=https://github.com/lavanet/lava/releases/download/v0.4.4
+UPGRADE_FILE=lavad-v0.4.4-linux-amd64
 
 function main {
   echo "                                        NODE INSTALLER                                       ";
