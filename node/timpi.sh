@@ -1,24 +1,24 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.19.5
 
 # Node
-NODE_REPO=https://github.com/NibiruChain/nibiru.git
-NODE_VERSION=v0.19.2
-NODE_REPO_FOLDER=nibiru
-NODE_DAEMON=nibid
-NODE_ID=nibiru-itn-1
-NODE_DENOM=unibi
-NODE_FOLDER=.nibid
+NODE_REPO=https://github.com/Timpi-official/Timpi-ChainTN.git
+NODE_VERSION=
+NODE_REPO_FOLDER=Timpi-ChainTN/cmd/TimpiChain
+NODE_DAEMON=timpid
+NODE_ID=TimpiChainTN2
+NODE_DENOM=utimpiTN
+NODE_FOLDER=.TimpiChain
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://networks.itn.nibiru.fi/nibiru-itn-1/genesis
-NODE_GENESIS_CHECKSUM=5cedb9237c6d807a89468268071647649e90b40ac8cd6d1ded8a72323144880d
-NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/addrbook.json
+NODE_GENESIS_FILE=https://ss-t.timpi.nodestake.top/genesis.json
+NODE_GENESIS_CHECKSUM=4df3995bbe58f769b5f312e3bcecfcd4779fc78fdd94519127c6b59a6da89d08
+NODE_ADDR_BOOK=false
+NODE_ADDR_BOOK_FILE=https://ss-t.timpi.nodestake.top/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=nibiru
+NODE_SERVICE_NAME=timpi
 
 # Validator
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/nibiru-itn-1_2023-04-11.tar.lz4
+SNAPSHOT_PATH=https://ss-t.timpi.nodestake.top/2023-07-23_timpi_430441.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -162,8 +162,8 @@ function installNode() {
 
   git clone $NODE_REPO
   cd $NODE_REPO_FOLDER
-  git checkout $NODE_VERSION
-  make install
+  go build
+  sudo mv TimpiChain $HOME/go/bin/$NODE_DAEMON
 
   echo -e "\e[1m\e[32mInstalling Node finished. \e[0m" && sleep 1
 }
@@ -209,7 +209,7 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
+    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
   fi
 
   # Checksum Genesis
@@ -222,7 +222,7 @@ function initNode() {
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
-    curl -s $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
+    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
   fi
 
   echo "Setting configuration..."
@@ -231,7 +231,8 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  sed -i 's|seeds =.*|seeds = "'$(curl -s https://networks.itn.nibiru.fi/$NODE_ID/seeds)'"|g' $CONFIG_PATH
+  SEEDS=""
+  sed -i.bak -e "s/^seeds =.*/seeds = \"$SEEDS\"/" $CONFIG_PATH
 
   # peer
   PEERS=""
@@ -250,8 +251,8 @@ function initNode() {
   sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 50/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 50/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -260,7 +261,7 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.025$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -390,8 +391,9 @@ function createValidator() {
     --website="$YOUR_WEBSITE" \
     --identity "$YOUR_IDENTITY" \
     --min-self-delegation="1000000" \
+    --gas-adjustment 1.4 \
+    --gas auto \
     --gas-prices="0.025$NODE_DENOM" \
-    --gas="250000" \
     --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
@@ -406,7 +408,7 @@ function downloadSnapshot() {
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
   sudo rm -rf $HOME/$NODE_FOLDER/data
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+  curl -o - -L $SNAPSHOT_PATH | lz4 -c -d - | tar -x -C $HOME/$NODE_FOLDER
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }

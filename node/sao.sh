@@ -4,21 +4,21 @@
 GO_VERSION=1.19.4
 
 # Node
-NODE_REPO=https://github.com/NibiruChain/nibiru.git
-NODE_VERSION=v0.19.2
-NODE_REPO_FOLDER=nibiru
-NODE_DAEMON=nibid
-NODE_ID=nibiru-itn-1
-NODE_DENOM=unibi
-NODE_FOLDER=.nibid
+NODE_REPO=https://github.com/SaoNetwork/sao-consensus.git
+NODE_VERSION=v0.1.4
+NODE_REPO_FOLDER=sao-consensus
+NODE_DAEMON=saod
+NODE_ID=sao-testnet1
+NODE_DENOM=sao
+NODE_FOLDER=.sao
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://networks.itn.nibiru.fi/nibiru-itn-1/genesis
-NODE_GENESIS_CHECKSUM=5cedb9237c6d807a89468268071647649e90b40ac8cd6d1ded8a72323144880d
+NODE_GENESIS_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Sao/genesis.json
+NODE_GENESIS_CHECKSUM=4df3995bbe58f769b5f312e3bcecfcd4779fc78fdd94519127c6b59a6da89d08
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/addrbook.json
+NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Sao/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=nibiru
+NODE_SERVICE_NAME=sao
 
 # Validator
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/nibiru-itn-1_2023-04-11.tar.lz4
+SNAPSHOT_PATH=https://ss-t.sao.nodestake.top/2023-04-28_2229510.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -209,7 +209,7 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
+    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
   fi
 
   # Checksum Genesis
@@ -222,7 +222,7 @@ function initNode() {
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
-    curl -s $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
+    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
   fi
 
   echo "Setting configuration..."
@@ -231,10 +231,11 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  sed -i 's|seeds =.*|seeds = "'$(curl -s https://networks.itn.nibiru.fi/$NODE_ID/seeds)'"|g' $CONFIG_PATH
+  SEEDS=""
+  sed -i.bak -e "s/^seeds =.*/seeds = \"$SEEDS\"/" $CONFIG_PATH
 
   # peer
-  PEERS=""
+  PEERS="099fae8829071292f6b1cfaa2b5d637da4aac1b9@203.23.128.181:26656"
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -250,8 +251,8 @@ function initNode() {
   sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 50/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 50/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."

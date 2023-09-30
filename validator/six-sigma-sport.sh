@@ -4,29 +4,29 @@
 GO_VERSION=1.19.4
 
 # Node
-NODE_REPO=https://github.com/NibiruChain/nibiru.git
-NODE_VERSION=v0.19.2
-NODE_REPO_FOLDER=nibiru
-NODE_DAEMON=nibid
-NODE_ID=nibiru-itn-1
-NODE_DENOM=unibi
-NODE_FOLDER=.nibid
+NODE_REPO=https://github.com/sge-network/sge.git
+NODE_VERSION=v1.1.0
+NODE_REPO_FOLDER=sge
+NODE_DAEMON=sged
+NODE_ID=sgenet-1
+NODE_DENOM=sge
+NODE_FOLDER=.sge
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://networks.itn.nibiru.fi/nibiru-itn-1/genesis
-NODE_GENESIS_CHECKSUM=5cedb9237c6d807a89468268071647649e90b40ac8cd6d1ded8a72323144880d
+NODE_GENESIS_FILE=https://ss.sge.nodestake.top/genesis.json
+NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/addrbook.json
+NODE_ADDR_BOOK_FILE=https://ss.sge.nodestake.top/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=nibiru
+NODE_SERVICE_NAME=sge
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/nibiru-itn-1_2023-04-11.tar.lz4
+SNAPSHOT_PATH=https://ss.sge.nodestake.top/2023-09-17_sge_170057.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -209,20 +209,12 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
+    curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
   fi
-
-  # Checksum Genesis
-  # if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
-  #   echo "Genesis checksum is match"
-  # else
-  #   echo "Genesis checksum is not match"
-  #   return 1
-  # fi
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
-    curl -s $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
+    curl -Ls $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
   fi
 
   echo "Setting configuration..."
@@ -231,10 +223,11 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  sed -i 's|seeds =.*|seeds = "'$(curl -s https://networks.itn.nibiru.fi/$NODE_ID/seeds)'"|g' $CONFIG_PATH
+  SEEDS="6a727128f427d166d90a1185c7965b178235aaee@rpc.sge.nodestake.top:666,a973f744ec9b00cd387f62fc8d69ae1d753c060e@seed.sge.cros-nest.com:26656"
+  sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS=""
+  PEERS="4980b478f91de9be0564a547779e5c6cb07eb995@3.239.15.80:26656,0e7042be1b77707aaf0597bb804da90d3a606c08@3.88.40.53:26656"
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -260,7 +253,7 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.025$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.001$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -390,8 +383,7 @@ function createValidator() {
     --website="$YOUR_WEBSITE" \
     --identity "$YOUR_IDENTITY" \
     --min-self-delegation="1000000" \
-    --gas-prices="0.025$NODE_DENOM" \
-    --gas="250000" \
+    --gas-prices="0.001$NODE_DENOM" \
     --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
@@ -476,7 +468,7 @@ function upgradeNode() {
 
   echo -e "\e[1m\e[32Upgrading node... \e[0m" && sleep 1
   sudo rm $HOME/go/bin/$NODE_DAEMON
-  sudo mv $HOME/upgrade/bin/$NODE_DAEMON $HOME/go/bin/nibid
+  sudo mv $HOME/upgrade/bin/$NODE_DAEMON $HOME/go/bin
   sudo rm -rf $HOME/upgrade
 
   echo -e "\e[1m\e[32Restarting node... \e[0m" && sleep 1
@@ -542,10 +534,3 @@ main
 # Run:
 # On Mac: sh node-tool.sh
 # On Ubuntu: sudo chmod +x node-tool.sh && ./node-tool.sh
-
-# FAUCET_URL="https://faucet.testnet-2.nibiru.fi/"
-# ADDR="nibi1pzfy45z6ysd9c0fp83fczt6zhusulr45vcxww3" # X MUN
-# ADDR="nibi15a6my3yy7re9aspur592pdw0wdd4fvxakk92pz" #   Defund
-# ADDR="nibi1xr5980r6e7cy3u3pfm5xq2ruh5d3xy6akafmp0" #   Gitopia
-# ADDR="nibi16re2zprhnekq62qmcuh7v0dxtsa7le3n3s49ke" # X HyperSign
-# curl -X POST -d '{"address": "'"$ADDR"'", "coins": ["10000000unibi","100000000000unusd"]}' $FAUCET_URL

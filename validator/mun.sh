@@ -1,32 +1,32 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.20
 
 # Node
-NODE_REPO=https://github.com/NibiruChain/nibiru.git
-NODE_VERSION=v0.19.2
-NODE_REPO_FOLDER=nibiru
-NODE_DAEMON=nibid
-NODE_ID=nibiru-itn-1
-NODE_DENOM=unibi
-NODE_FOLDER=.nibid
+NODE_VERSION=v2.1.1
+NODE_REPO=https://github.com/munblockchain/mun-node.git
+NODE_REPO_FOLDER=mun-node
+NODE_DAEMON=mund
+NODE_ID=mun-1
+NODE_DENOM=umun
+NODE_FOLDER=.mun
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://networks.itn.nibiru.fi/nibiru-itn-1/genesis
-NODE_GENESIS_CHECKSUM=5cedb9237c6d807a89468268071647649e90b40ac8cd6d1ded8a72323144880d
+NODE_GENESIS_FILE=
+NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/addrbook.json
+NODE_ADDR_BOOK_FILE=https://snapshots2.nodejumper.io/gitopia/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=nibiru
+NODE_SERVICE_NAME=mun
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/nibiru-itn-1_2023-04-11.tar.lz4
+SNAPSHOT_PATH=
 
 # Upgrade
 UPGRADE_PATH=
@@ -131,38 +131,31 @@ function installGo() {
     sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
     sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
+    PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
+    if [ -z "$PATH_INCLUDES_GO" ]; then
+      echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >>$HOME/.profile
+      echo "export GOPATH=$HOME/go" >>$HOME/.profile
+    fi
+
+    source ~/.profile
+    go version
+
+    echo -e "If go version response nothing, try to apply again: source ~/.profile" && sleep 1
+    echo -e "\e[1m\e[32mInstallation Go finished. \e[0m" && sleep 1
   else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
+    echo -e "\e[1m\e[32mGo already installed with version: \e[0m"
+    go version
   fi
-
-  PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
-  if [ -z "$PATH_INCLUDES_GO" ]; then
-    echo "export GOROOT=/usr/local/go" >>$HOME/.profile
-    echo "export GOPATH=$HOME/go" >>$HOME/.profile
-    echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >>$HOME/.profile
-  fi
-
-  source $HOME/.profile
-  go version
-
-  echo -e "If go version return nothing, try to apply again: source $HOME/.profile" && sleep 1
 }
 
 function installNode() {
-  # remove previous tools
-  echo -e "\e[1m\e[32mRemoving previous installed tools... \e[0m" && sleep 1
-  if [ -f "/usr/local/bin/$NODE_DAEMON" ]; then
-    sudo rm -rf usr/local/bin/$NODE_DAEMON
-  fi
-
   # Install binary
   echo -e "\e[1m\e[32mInstalling Node... \e[0m" && sleep 1
   cd $HOME
 
   git clone $NODE_REPO
   cd $NODE_REPO_FOLDER
-  git checkout $NODE_VERSION
+  go mod tidy
   make install
 
   echo -e "\e[1m\e[32mInstalling Node finished. \e[0m" && sleep 1
@@ -187,42 +180,34 @@ function initNode() {
   if [ -z "$PROFILE_INCLUDED" ]; then
     echo "export NODE_NAME=\"${NODE_NAME}\"" >>$HOME/.profile
     echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
+    echo "export NODE_ID=${NODE_ID}" >>$HOME/.profile
     source ~/.profile
   fi
 
   # Initialize Node
   if [ ! -d "$HOME/$NODE_FOLDER" ]; then
     $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
-
-    # keyring
-    $NODE_DAEMON config keyring-backend test
   fi
 
   # Download Genesis
   cd $HOME
   echo -e "\e[1m\e[32mDownloading Genesis File... \e[0m" && sleep 1
 
-  if $NODE_GENESIS_ZIP; then
+  if [ $NODE_GENESIS_ZIP ]; then
     echo "Downloading zip file..."
-    curl -s $NODE_GENESIS_FILE -o $HOME/genesis.json.gz
-    gunzip $HOME/genesis.json.gz
+    curl -sL $NODE_GENESIS_FILE >$HOME/genesis.tar.gz
+    tar -xzf $HOME/genesis.tar.gz
+    rm $HOME/genesis.tar.gz
+    rm $HOME/$NODE_FOLDER/config/genesis.json
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
+    curl https://mainnet1rpc.mun.money/genesis | jq ".result.genesis" >$HOME/$NODE_FOLDER/config/genesis.json
   fi
 
-  # Checksum Genesis
-  # if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
-  #   echo "Genesis checksum is match"
-  # else
-  #   echo "Genesis checksum is not match"
-  #   return 1
-  # fi
-
   # Download addrbook
-  if $NODE_ADDR_BOOK; then
-    curl -s $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
+  if [ $NODE_ADDR_BOOK ]; then
+    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
   fi
 
   echo "Setting configuration..."
@@ -231,11 +216,8 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  sed -i 's|seeds =.*|seeds = "'$(curl -s https://networks.itn.nibiru.fi/$NODE_ID/seeds)'"|g' $CONFIG_PATH
-
-  # peer
-  PEERS=""
-  sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
+  SEEDS="036c564e3de76ffad3e013bea52c16eb1de5a400@31.14.40.112:26656"
+  sed -i.default "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # log
   echo "Setting Log..."
@@ -249,10 +231,6 @@ function initNode() {
   echo "Setting Prometheus..."
   sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
-  # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
-
   # port
   echo "Setting Port..."
   sed -i.bak -e "s%^proxy_app = \"tcp://127.0.0.1:26658\"%proxy_app = \"tcp://127.0.0.1:${NODE_PORT}658\"%; s%^laddr = \"tcp://127.0.0.1:26657\"%laddr = \"tcp://127.0.0.1:${NODE_PORT}657\"%; s%^pprof_laddr = \"localhost:6060\"%pprof_laddr = \"localhost:${NODE_PORT}060\"%; s%^laddr = \"tcp://0.0.0.0:26656\"%laddr = \"tcp://0.0.0.0:${NODE_PORT}656\"%; s%^prometheus_listen_addr = \":26660\"%prometheus_listen_addr = \":${NODE_PORT}660\"%" $CONFIG_PATH
@@ -260,11 +238,11 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.025$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.001$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
-  pruning="custom"
+  pruning="nothing"
   pruning_keep_recent="100"
   pruning_keep_every="0"
   pruning_interval="10"
@@ -390,8 +368,7 @@ function createValidator() {
     --website="$YOUR_WEBSITE" \
     --identity "$YOUR_IDENTITY" \
     --min-self-delegation="1000000" \
-    --gas-prices="0.025$NODE_DENOM" \
-    --gas="250000" \
+    --gas-prices="0.001$NODE_DENOM" \
     --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
@@ -476,7 +453,7 @@ function upgradeNode() {
 
   echo -e "\e[1m\e[32Upgrading node... \e[0m" && sleep 1
   sudo rm $HOME/go/bin/$NODE_DAEMON
-  sudo mv $HOME/upgrade/bin/$NODE_DAEMON $HOME/go/bin/nibid
+  sudo mv $HOME/upgrade/bin/$NODE_DAEMON $HOME/go/bin
   sudo rm -rf $HOME/upgrade
 
   echo -e "\e[1m\e[32Restarting node... \e[0m" && sleep 1
@@ -487,8 +464,6 @@ function upgradeNode() {
 }
 
 function helpfullCommand() {
-  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
-
   echo "Check log:"
   echo "sudo journalctl -u $NODE_SERVICE_NAME -f -o cat"
   echo ""
@@ -499,6 +474,7 @@ function helpfullCommand() {
   echo "$NODE_DAEMON tx slashing unjail --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --fees 10000$NODE_DENOM -y"
   echo ""
   echo "Withdraw reward and commission:"
+  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
   echo "$NODE_DAEMON tx distribution withdraw-rewards $VALIDATOR_ADDRESS --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --commission -y"
   echo ""
   echo "Delegate:"
@@ -510,8 +486,8 @@ function helpfullCommand() {
 }
 
 function checksum() {
-  NODE_FOLDER=.ollo
-  NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
+  NODE_FOLDER=.gitopia
+  NODE_GENESIS_CHECKSUM=0cf5c55e6ea1fbcebccadba0f6dc0b83ac76d1b608487a06978956404ce33e66
 
   if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
     echo "Genesis checksum is match"
@@ -524,10 +500,10 @@ function checksum() {
 function checkProfile() {
   PROFILE_INCLUDED=$(grep "NODE_NAME" $HOME/.profile)
   if [ -z "$PROFILE_INCLUDED" ]; then
-    echo "add to profile"
+    echo "add to bash profile"
     echo "export NODE_NAME=${NODE_NAME}" >>$HOME/.profile
     echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
-    source $HOME/.profile
+    source ~/.profile
   else
     echo "already added to bash profile"
   fi
@@ -539,13 +515,6 @@ main
 # checksum
 # checkProfile
 
-# Run:
+# Run
 # On Mac: sh node-tool.sh
-# On Ubuntu: sudo chmod +x node-tool.sh && ./node-tool.sh
-
-# FAUCET_URL="https://faucet.testnet-2.nibiru.fi/"
-# ADDR="nibi1pzfy45z6ysd9c0fp83fczt6zhusulr45vcxww3" # X MUN
-# ADDR="nibi15a6my3yy7re9aspur592pdw0wdd4fvxakk92pz" #   Defund
-# ADDR="nibi1xr5980r6e7cy3u3pfm5xq2ruh5d3xy6akafmp0" #   Gitopia
-# ADDR="nibi16re2zprhnekq62qmcuh7v0dxtsa7le3n3s49ke" # X HyperSign
-# curl -X POST -d '{"address": "'"$ADDR"'", "coins": ["10000000unibi","100000000000unusd"]}' $FAUCET_URL
+# On Ubuntu: ./node-tool.sh

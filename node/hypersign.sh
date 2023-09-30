@@ -4,21 +4,21 @@
 GO_VERSION=1.19.4
 
 # Node
-NODE_REPO=https://github.com/NibiruChain/nibiru.git
-NODE_VERSION=v0.19.2
-NODE_REPO_FOLDER=nibiru
-NODE_DAEMON=nibid
-NODE_ID=nibiru-itn-1
-NODE_DENOM=unibi
-NODE_FOLDER=.nibid
+NODE_REPO=https://github.com/hypersign-protocol/hid-node.git
+NODE_VERSION=v0.1.8
+NODE_REPO_FOLDER=hid-node
+NODE_DAEMON=hid-noded
+NODE_ID=jagrat
+NODE_DENOM=uhid
+NODE_FOLDER=.hid-node
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://networks.itn.nibiru.fi/nibiru-itn-1/genesis
-NODE_GENESIS_CHECKSUM=5cedb9237c6d807a89468268071647649e90b40ac8cd6d1ded8a72323144880d
-NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/addrbook.json
+NODE_GENESIS_FILE=https://snapshots.kjnodes.com/hypersign-testnet/genesis.json
+NODE_GENESIS_CHECKSUM=
+NODE_ADDR_BOOK=false
+NODE_ADDR_BOOK_FILE=https://snapshots.kjnodes.com/hypersign-testnet/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=nibiru
+NODE_SERVICE_NAME=hid
 
 # Validator
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots2-testnet.nodejumper.io/nibiru-testnet/nibiru-itn-1_2023-04-11.tar.lz4
+SNAPSHOT_PATH=https://snapshots.kjnodes.com/hypersign-testnet/snapshot_latest.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -209,7 +209,7 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
+    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
   fi
 
   # Checksum Genesis
@@ -222,7 +222,7 @@ function initNode() {
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
-    curl -s $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
+    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
   fi
 
   echo "Setting configuration..."
@@ -231,7 +231,8 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  sed -i 's|seeds =.*|seeds = "'$(curl -s https://networks.itn.nibiru.fi/$NODE_ID/seeds)'"|g' $CONFIG_PATH
+  SEEDS="3f472746f46493309650e5a033076689996c8881@hypersign-testnet.rpc.kjnodes.com:13159"
+  sed -i.bak -e "s/^seeds =.*/seeds = \"$SEEDS\"/" $CONFIG_PATH
 
   # peer
   PEERS=""
@@ -250,8 +251,8 @@ function initNode() {
   sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 50/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 50/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
