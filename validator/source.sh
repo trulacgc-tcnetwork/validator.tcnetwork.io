@@ -1,32 +1,32 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.20.5
 
 # Node
-NODE_REPO=https://github.com/SaoNetwork/sao-consensus.git
-NODE_VERSION=v0.1.8
-NODE_REPO_FOLDER=sao-consensus
-NODE_DAEMON=saod
-NODE_ID=sao-20230629
-NODE_DENOM=usct
-NODE_FOLDER=.sao
+NODE_REPO=https://github.com/Source-Protocol-Cosmos/source.git
+NODE_VERSION=v3.0.0
+NODE_REPO_FOLDER=source
+NODE_DAEMON=sourced
+NODE_ID=source-1
+NODE_DENOM=usource
+NODE_FOLDER=.source
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://ss-t.sao.nodestake.top/genesis.json
+NODE_GENESIS_FILE=https://ss.source.nodestake.top/genesis.json
 NODE_GENESIS_CHECKSUM=
-NODE_ADDR_BOOK=false
-NODE_ADDR_BOOK_FILE=https://ss-t.sao.nodestake.top/addrbook.json
+NODE_ADDR_BOOK=true
+NODE_ADDR_BOOK_FILE=https://ss.source.nodestake.top/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=sao-beta
+NODE_SERVICE_NAME=source
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://ss-t.sao.nodestake.top/2023-09-30_4965079.tar.lz4
+SNAPSHOT_PATH=https://source-m.snapshot.stavr.tech/source/source-snap.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -46,7 +46,8 @@ function main {
   echo "[1] Install Library Dependencies"
   echo "[2] Install Go"
   echo "[3] Install Node"
-  echo "[4] Setup Node"
+  echo "[4] Init Node"
+  echo "[4b] Setup Node (Genesis, Seed, Setting)"
   echo "[5] Setup Service"
   echo "[6] Create/Import Wallet"
   echo "[7] Create validator"
@@ -74,6 +75,10 @@ function main {
     ;;
   "4")
     initNode
+    exit 0
+    ;;
+  "4b")
+    setupNode
     exit 0
     ;;
   "5")
@@ -124,17 +129,12 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  rm -rf $HOME/go
+  sudo rm -rf /usr/local/go
+  cd $HOME
+  curl https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz | sudo tar -C/usr/local -zxvf -
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
-  fi
+  echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then
@@ -183,16 +183,17 @@ function initNode() {
   echo -e "NODE PORT      : \e[1m\e[31m${NODE_PORT}657\e[0m"
   echo ""
 
-  PROFILE_INCLUDED=$(grep "NODE_NAME" $HOME/.profile)
-  if [ -z "$PROFILE_INCLUDED" ]; then
-    echo "export NODE_NAME=\"${NODE_NAME}\"" >>$HOME/.profile
-    echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
-    source ~/.profile
-  fi
+  echo "export NODE_NAME=\"${NODE_NAME}\"" >>$HOME/.profile
+  echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
+  echo "export NODE_ID=${NODE_ID}" >>$HOME/.profile
+  source ~/.profile
 
   # Initialize Node
+  echo -e "\e[1m\e[32mInit Chain... \e[0m" && sleep 1
   $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
+}
 
+function setupNode() {
   # Download Genesis
   cd $HOME
   echo -e "\e[1m\e[32mDownloading Genesis File... \e[0m" && sleep 1
@@ -204,16 +205,8 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
+    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
   fi
-
-  # Checksum Genesis
-  # if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
-  #   echo "Genesis checksum is match"
-  # else
-  #   echo "Genesis checksum is not match"
-  #   return 1
-  # fi
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
@@ -227,10 +220,10 @@ function initNode() {
   # seed
   echo "Setting Seed..."
   SEEDS=""
-  sed -i.bak -e "s/^seeds =.*/seeds = \"$SEEDS\"/" $CONFIG_PATH
+  sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS="b10aa9b0535d444b5ae9a670e74a265ed5f34590@8.222.242.30:26656"
+  PEERS="64be24b94db7ebe4bbaeee0d0a3b10393032d1ea@65.109.9.207:26656,c5eccf228a25f979592297311bfe2cc8ef94e482@138.201.225.104:47956,c1d27a1638fbf6a02c561a68b1b2ae715a7b34af@142.132.248.253:55528,d9bfa29e0cf9c4ce0cc9c26d98e5d97228f93b0b@65.108.233.103:12856,79adf04741f4a019684efc73e42467cb7d6d3a69@148.251.19.41:25656,297f2d459b783acffef3623b9192ffef64d26122@95.216.46.125:28656,bc35de935bd51de3fce15dd2537fcbdec68a3762@65.109.101.53:11056,afc8fa287e2b6b46bbeba57dfcb4bd6dcab6b6a3@88.99.208.54:28656,8a812024b8a5b4539878b03ac2f822655831ca5f@65.109.116.151:32656,2bf28f66b5240fc8010181aa840515ed46906b93@65.109.24.82:28656,9c7e4e14def9812c24e31c2cab060ee3dc158135@102.182.140.86:26656,c223adbf2ba594cb6254a82fff92c00d14bca5c2@147.182.211.27:26656,39d07822aa1757059b0f0de49a8a0f45553eacb5@95.217.160.123:26656,3c729ffe80393abd430a7c723fab2e8aa60ffa46@88.99.164.158:20056,96045001b662ab30d951c88c4f4227658cc6d1b1@174.138.176.146:26656,82898535a6b219aeeff9973d687347bca2339fc0@65.108.230.113:20056"
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -243,11 +236,11 @@ function initNode() {
 
   # prometheus
   echo "Setting Prometheus..."
-  sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
+  sed -i -e "s/prometheus = false/prometheus = true/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 50/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 50/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -256,7 +249,7 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.025$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.25$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -386,8 +379,6 @@ function createValidator() {
     --website="$YOUR_WEBSITE" \
     --identity "$YOUR_IDENTITY" \
     --min-self-delegation="1000000" \
-    --gas-prices="0.025$NODE_DENOM" \
-    --gas="250000" \
     --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
@@ -401,7 +392,7 @@ function downloadSnapshot() {
 
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
-  sudo rm -rf $HOME/$NODE_FOLDER/data
+  $NODE_DAEMON tendermint unsafe-reset-all --home $HOME/$NODE_FOLDER --keep-addr-book
   curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
@@ -472,7 +463,7 @@ function upgradeNode() {
 
   echo -e "\e[1m\e[32Upgrading node... \e[0m" && sleep 1
   sudo rm $HOME/go/bin/$NODE_DAEMON
-  sudo mv $HOME/upgrade/bin/$NODE_DAEMON $HOME/go/bin/nibid
+  sudo mv $HOME/upgrade/bin/$NODE_DAEMON $HOME/go/bin
   sudo rm -rf $HOME/upgrade
 
   echo -e "\e[1m\e[32Restarting node... \e[0m" && sleep 1
@@ -506,8 +497,8 @@ function helpfullCommand() {
 }
 
 function checksum() {
-  NODE_FOLDER=.ollo
-  NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
+  NODE_FOLDER=.aura
+  NODE_GENESIS_CHECKSUM=90b9404d38167e3b40f56ddc11a1565f0107b89008742425e44905871699febc
 
   if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
     echo "Genesis checksum is match"
@@ -537,11 +528,4 @@ main
 
 # Run:
 # On Mac: sh node-tool.sh
-# On Ubuntu: sudo chmod +x node-tool.sh && ./node-tool.sh
-
-# FAUCET_URL="https://faucet.testnet-2.nibiru.fi/"
-# ADDR="nibi1pzfy45z6ysd9c0fp83fczt6zhusulr45vcxww3" # X MUN
-# ADDR="nibi15a6my3yy7re9aspur592pdw0wdd4fvxakk92pz" #   Defund
-# ADDR="nibi1xr5980r6e7cy3u3pfm5xq2ruh5d3xy6akafmp0" #   Gitopia
-# ADDR="nibi16re2zprhnekq62qmcuh7v0dxtsa7le3n3s49ke" # X HyperSign
-# curl -X POST -d '{"address": "'"$ADDR"'", "coins": ["10000000unibi","100000000000unusd"]}' $FAUCET_URL
+# On Ubuntu: sudo chmod +x node.sh && ./node.sh

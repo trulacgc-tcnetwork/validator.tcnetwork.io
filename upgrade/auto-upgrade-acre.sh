@@ -3,16 +3,16 @@
 YELLOW="\033[33m"
 GREEN="\033[32m"
 NORMAL="\033[0m"
-HEALTH_CHECKS_ID=
+HEALTH_CHECKS_ID=8357d353-ecf5-4606-8ea3-f3a5d2b24aa0
 SLEEP_SECOND=60
 
-USER=
-NODE_DAEMON=
-NODE_PORT=
-NODE_SERVICE_NAME=
+USER=acre
+NODE_DAEMON=acred
+NODE_PORT=46657
+NODE_SERVICE_NAME=acre
 
-UPGRADE_OPTION=1
-UPGRADE_HEIGHT=
+UPGRADE_OPTION=2
+UPGRADE_HEIGHT=2274864
 UPGRADE_FOLDER=upgrade
 
 # Option 1: upgrade by using daemon file
@@ -21,8 +21,8 @@ UPGRADE_FILE=
 UPGRADE_UNZIP=
 
 # Option 2: upgrade by building from source
-NODE_REPO=
-NODE_REPO_FOLDER=
+NODE_REPO=https://github.com/ArableProtocol/acrechain-patch.git
+NODE_REPO_FOLDER=acrechain-patch
 NODE_VERSION=
 
 function downloadDaemon() {
@@ -47,7 +47,6 @@ function downloadDaemon() {
     sudo rm -rf $HOME/$NODE_REPO_FOLDER
     git clone $NODE_REPO
     cd $NODE_REPO_FOLDER
-    git checkout $NODE_VERSION
     make build
 
     sudo mv $HOME/$NODE_REPO_FOLDER/build/$NODE_DAEMON $HOME/$UPGRADE_FOLDER/$NODE_DAEMON

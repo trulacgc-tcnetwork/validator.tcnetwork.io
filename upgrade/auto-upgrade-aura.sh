@@ -3,16 +3,16 @@
 YELLOW="\033[33m"
 GREEN="\033[32m"
 NORMAL="\033[0m"
-HEALTH_CHECKS_ID=
+HEALTH_CHECKS_ID=8357d353-ecf5-4606-8ea3-f3a5d2b24aa0
 SLEEP_SECOND=60
 
-USER=
-NODE_DAEMON=
-NODE_PORT=
-NODE_SERVICE_NAME=
+USER=testnet
+NODE_DAEMON=aurad
+NODE_PORT=36657
+NODE_SERVICE_NAME=aura2
 
-UPGRADE_OPTION=1
-UPGRADE_HEIGHT=
+UPGRADE_OPTION=2
+UPGRADE_HEIGHT=4307903
 UPGRADE_FOLDER=upgrade
 
 # Option 1: upgrade by using daemon file
@@ -21,9 +21,9 @@ UPGRADE_FILE=
 UPGRADE_UNZIP=
 
 # Option 2: upgrade by building from source
-NODE_REPO=
-NODE_REPO_FOLDER=
-NODE_VERSION=
+NODE_REPO=https://github.com/aura-nw/aura
+NODE_REPO_FOLDER=aura
+NODE_VERSION=euphoria_v0.5.1
 
 function downloadDaemon() {
   echo ""
@@ -87,6 +87,8 @@ while true; do
     sudo rm \$NODE_DAEMON_PATH
     sudo mv $HOME/$UPGRADE_FOLDER/$NODE_DAEMON \$NODE_DAEMON_PATH
 
+    sudo rm -r $HOME/.$NODE_SERVICE_NAME/wasm/wasm/cache
+    
     sudo systemctl start $NODE_SERVICE_NAME && sleep 1
 
     echo -e "$GREEN !!! Upgrade done !!! $NORMAL"

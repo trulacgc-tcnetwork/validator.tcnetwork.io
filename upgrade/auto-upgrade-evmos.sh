@@ -3,27 +3,27 @@
 YELLOW="\033[33m"
 GREEN="\033[32m"
 NORMAL="\033[0m"
-HEALTH_CHECKS_ID=
-SLEEP_SECOND=60
+HEALTH_CHECKS_ID=8357d353-ecf5-4606-8ea3-f3a5d2b24aa0
+SLEEP_SECOND=180
 
-USER=
-NODE_DAEMON=
-NODE_PORT=
-NODE_SERVICE_NAME=
+USER=evmos
+NODE_DAEMON=evmosd
+NODE_PORT=26657
+NODE_SERVICE_NAME=evmos
 
 UPGRADE_OPTION=1
-UPGRADE_HEIGHT=
+UPGRADE_HEIGHT=14538200
 UPGRADE_FOLDER=upgrade
 
 # Option 1: upgrade by using daemon file
-UPGRADE_PATH=
-UPGRADE_FILE=
-UPGRADE_UNZIP=
+UPGRADE_PATH=https://github.com/evmos/evmos/releases/download/v13.0.2
+UPGRADE_FILE=evmos_13.0.2_Linux_amd64.tar.gz
+UPGRADE_UNZIP=$UPGRADE_FOLDER/bin
 
 # Option 2: upgrade by building from source
-NODE_REPO=
-NODE_REPO_FOLDER=
-NODE_VERSION=
+NODE_REPO=https://github.com/evmos/evmos.git
+NODE_REPO_FOLDER=evmos
+NODE_VERSION=v12.1.0
 
 function downloadDaemon() {
   echo ""
@@ -32,12 +32,13 @@ function downloadDaemon() {
   cd $HOME
   sudo rm -rf $HOME/$UPGRADE_FOLDER
   mkdir $HOME/$UPGRADE_FOLDER
+  cd $HOME/$UPGRADE_FOLDER
 
   if [ $UPGRADE_OPTION == 1 ]; then
     sudo wget $UPGRADE_PATH/$UPGRADE_FILE
     sudo tar xfv $UPGRADE_FILE
 
-    sudo mv $HOME/$UPGRADE_UNZIP/$NODE_DAEMON $HOME/$UPGRADE_FOLDER/$NODE_DAEMON
+    sudo mv $HOME/$UPGRADE_UNZIP/$NODE_DAEMON $HOME/$UPGRADE_FOLDER
 
     sudo rm $UPGRADE_FILE
     sudo rm -rf $UPGRADE_UNZIP
@@ -90,11 +91,9 @@ while true; do
     sudo systemctl start $NODE_SERVICE_NAME && sleep 1
 
     echo -e "$GREEN !!! Upgrade done !!! $NORMAL"
-
+    
     # using curl (10 second timeout, retry up to 2 times):
-    \${CURL} -m 10 --retry 2 -d '{"upgrade":"successful"}' -H "Content-Type: application/json" -X POST https://hc-ping.com/$HEALTH_CHECKS_ID
-
-    return 1
+    \${CURL} -m 10 --retry 2 -d '{"upgrade $NODE_DAEMON":"successful"}' -H "Content-Type: application/json" -X POST https://hc-ping.com/$HEALTH_CHECKS_ID
   fi
 
   # remove after done upgraded
@@ -104,8 +103,6 @@ while true; do
     sudo systemctl stop auto-upgrade-$NODE_SERVICE_NAME
     
     echo -e "$GREEN !!! Stop service successful !!! $NORMAL"
-
-    return 1
   fi
 
   echo -e "$GREEN Auto upgrade is sleeping $NORMAL"
@@ -161,6 +158,7 @@ function removeService() {
 function stopSudoPrompt() {
   echo ""
   if [ $USER != 'root' ]; then
+    echo ""
     echo -e "$YELLOW Please make sure to stop annoying SUDO password prompt for account $USER: $NORMAL"
     echo -e "$GREEN 1. In ternminal: sudo visudo $NORMAL"
     echo -e "$GREEN 2. Add end of the file: $USER ALL=(ALL) NOPASSWD: ALL $NORMAL"
@@ -209,6 +207,7 @@ function main() {
 }
 
 main
+
 # Running:
 # sudo nano node-upgrade.sh
 # sudo chmod +x node-upgrade.sh && ./node-upgrade.sh

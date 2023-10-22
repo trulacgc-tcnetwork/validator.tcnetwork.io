@@ -3,27 +3,27 @@
 YELLOW="\033[33m"
 GREEN="\033[32m"
 NORMAL="\033[0m"
-HEALTH_CHECKS_ID=
+HEALTH_CHECKS_ID=8357d353-ecf5-4606-8ea3-f3a5d2b24aa0
 SLEEP_SECOND=60
 
-USER=
-NODE_DAEMON=
-NODE_PORT=
-NODE_SERVICE_NAME=
+USER=hypersign
+NODE_DAEMON=hid-noded
+NODE_PORT=26657
+NODE_SERVICE_NAME=hid # hid for /etc/systemd/system/hid.service
 
 UPGRADE_OPTION=1
-UPGRADE_HEIGHT=
+UPGRADE_HEIGHT=2628600
 UPGRADE_FOLDER=upgrade
 
 # Option 1: upgrade by using daemon file
-UPGRADE_PATH=
-UPGRADE_FILE=
-UPGRADE_UNZIP=
+UPGRADE_PATH=https://github.com/hypersign-protocol/hid-node/releases/download/v0.1.7
+UPGRADE_FILE=hid-noded-0.1.7-linux-amd64.tar.gz
+UPGRADE_UNZIP=hid-noded-0.1.7-linux-amd64
 
 # Option 2: upgrade by building from source
-NODE_REPO=
-NODE_REPO_FOLDER=
-NODE_VERSION=
+NODE_REPO=https://github.com/hypersign-protocol/hid-node.git
+NODE_REPO_FOLDER=hid-node
+NODE_VERSION=v0.1.7
 
 function downloadDaemon() {
   echo ""
@@ -76,7 +76,7 @@ CURL=curl
 while true; do
   LATEST_HEIGHT=\$(\${CURL} -s localhost:$NODE_PORT/status | jq -r .result.sync_info.latest_block_height)
 
-  echo "Latest Block height: \$LATEST_HEIGHT"
+  echo \$LATEST_HEIGHT
 
   if [[ \$LATEST_HEIGHT == $UPGRADE_HEIGHT ]]; then
     echo -e "$GREEN !!! Upgrading chain... !!! $NORMAL"
@@ -90,9 +90,9 @@ while true; do
     sudo systemctl start $NODE_SERVICE_NAME && sleep 1
 
     echo -e "$GREEN !!! Upgrade done !!! $NORMAL"
-
+    
     # using curl (10 second timeout, retry up to 2 times):
-    \${CURL} -m 10 --retry 2 -d '{"upgrade":"successful"}' -H "Content-Type: application/json" -X POST https://hc-ping.com/$HEALTH_CHECKS_ID
+    \${CURL} -m 10 --retry 2 -d '{"upgrade $NODE_DAEMON":"successful"}' -H "Content-Type: application/json" -X POST https://hc-ping.com/$HEALTH_CHECKS_ID
 
     return 1
   fi
@@ -104,7 +104,6 @@ while true; do
     sudo systemctl stop auto-upgrade-$NODE_SERVICE_NAME
     
     echo -e "$GREEN !!! Stop service successful !!! $NORMAL"
-
     return 1
   fi
 
@@ -209,6 +208,10 @@ function main() {
 }
 
 main
+
 # Running:
 # sudo nano node-upgrade.sh
 # sudo chmod +x node-upgrade.sh && ./node-upgrade.sh
+
+# sudo systemctl status auto-upgrade-$NODE_SERVICE_NAME
+# sudo nano status auto-upgrade-$NODE_SERVICE_NAME
