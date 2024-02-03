@@ -1,32 +1,32 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.21.3
 
 # Node
-NODE_REPO=https://github.com/sge-network/sge.git
-NODE_VERSION=v1.1.0
-NODE_REPO_FOLDER=sge
-NODE_DAEMON=sged
-NODE_ID=sgenet-1
-NODE_DENOM=usge
-NODE_FOLDER=.sge
+NODE_REPO=https://snap.nodex.one/entrypoint-testnet/entrypointd
+NODE_VERSION=v1.2.0
+NODE_REPO_FOLDER=entrypoint
+NODE_DAEMON=entrypointd
+NODE_ID=entrypoint-pubtest-2
+NODE_DENOM=uentry
+NODE_FOLDER=.entrypoint
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://ss.sge.nodestake.top/genesis.json
+NODE_GENESIS_FILE=https://snap.nodex.one/entrypoint-testnet/genesis.json
 NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://ss.sge.nodestake.top/addrbook.json
+NODE_ADDR_BOOK_FILE=https://snap.nodex.one/entrypoint-testnet/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=sge
+NODE_SERVICE_NAME=entrypoint
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://testnet.explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://ss.sge.nodestake.top/2023-11-08_sge_943629.tar.lz4
+SNAPSHOT_PATH=https://snap.nodex.one/entrypoint-testnet/entrypoint-latest.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -124,17 +124,13 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  cd $HOME
+  wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
-  fi
+  echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then
@@ -160,10 +156,16 @@ function installNode() {
   echo -e "\e[1m\e[32mInstalling Node... \e[0m" && sleep 1
   cd $HOME
 
-  git clone $NODE_REPO
-  cd $NODE_REPO_FOLDER
-  git checkout $NODE_VERSION
-  make install
+  if $IS_DAEMON_INSTALL; then
+    wget $NODE_REPO
+    chmod +x $NODE_DAEMON
+    sudo cp $NODE_DAEMON /usr/local/bin
+  else
+    git clone $NODE_REPO
+    cd $NODE_REPO_FOLDER
+    git checkout $NODE_VERSION
+    make install
+  fi
 
   echo -e "\e[1m\e[32mInstalling Node finished. \e[0m" && sleep 1
 }
@@ -191,12 +193,10 @@ function initNode() {
   fi
 
   # Initialize Node
-  if [ ! -d "$HOME/$NODE_FOLDER" ]; then
-    $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
+  $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
 
-    # keyring
-    $NODE_DAEMON config keyring-backend test
-  fi
+  # keyring
+  $NODE_DAEMON config keyring-backend test
 
   # Download Genesis
   cd $HOME
@@ -223,11 +223,11 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS="6a727128f427d166d90a1185c7965b178235aaee@rpc.sge.nodestake.top:666,a973f744ec9b00cd387f62fc8d69ae1d753c060e@seed.sge.cros-nest.com:26656"
+  SEEDS=""
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS=""
+  PEERS="81bf2ade773a30eccdfee58a041974461f1838d8@185.107.68.148:26656,d57c7572d58cb3043770f2c0ba412b35035233ad@80.64.208.169:26656"
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -243,8 +243,8 @@ function initNode() {
   sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 10/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 40/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -253,7 +253,7 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.01ibc/8A138BC76D0FB2665F8937EC2BF01B9F6A714F6127221A0E155106A45E09BCC5\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -382,8 +382,11 @@ function createValidator() {
     --details="$YOUR_DETAIL" \
     --website="$YOUR_WEBSITE" \
     --identity "$YOUR_IDENTITY" \
+    --security-contact="support@tcnetwork.io" \
     --min-self-delegation="1" \
-    --gas="auto" \
+    --gas-adjustment 1.4 \
+    --gas auto \
+    --gas-prices 0.01ibc/8A138BC76D0FB2665F8937EC2BF01B9F6A714F6127221A0E155106A45E09BCC5 \
     --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
@@ -398,7 +401,7 @@ function downloadSnapshot() {
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
   sudo rm -rf $HOME/$NODE_FOLDER/data
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+  curl -o - -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }

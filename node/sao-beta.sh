@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.20.5
 
 # Node
 NODE_REPO=https://github.com/SaoNetwork/sao-consensus.git
-NODE_VERSION=v0.1.8
+NODE_VERSION=v0.1.9
 NODE_REPO_FOLDER=sao-consensus
 NODE_DAEMON=saod
 NODE_ID=sao-20230629
@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://ss-t.sao.nodestake.top/2023-09-30_4965079.tar.lz4
+SNAPSHOT_PATH=https://ss-t.sao.nodestake.top/2024-01-07_9983256.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -124,17 +124,13 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  cd $HOME
+  wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
-  fi
+  echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then

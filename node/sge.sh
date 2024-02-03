@@ -1,32 +1,32 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.20.5
 
 # Node
 NODE_REPO=https://github.com/sge-network/sge.git
-NODE_VERSION=v1.1.0
+NODE_VERSION=v1.3.1
 NODE_REPO_FOLDER=sge
 NODE_DAEMON=sged
-NODE_ID=sgenet-1
+NODE_ID=sge-network-4
 NODE_DENOM=usge
 NODE_FOLDER=.sge
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://ss.sge.nodestake.top/genesis.json
+NODE_GENESIS_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Projects/SGE/Testnet/genesis.json
 NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://ss.sge.nodestake.top/addrbook.json
+NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Projects/SGE/Testnet/addrbook.json
 
 # Service
 NODE_SERVICE_NAME=sge
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://testnet.explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://ss.sge.nodestake.top/2023-11-08_sge_943629.tar.lz4
+SNAPSHOT_PATH=http://sge-t.snapshot.stavr.tech:1017/sget/sget-snap.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -124,17 +124,13 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  cd $HOME
+  wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
-  fi
+  echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then
@@ -223,11 +219,11 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS="6a727128f427d166d90a1185c7965b178235aaee@rpc.sge.nodestake.top:666,a973f744ec9b00cd387f62fc8d69ae1d753c060e@seed.sge.cros-nest.com:26656"
+  SEEDS=""
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS=""
+  PEERS="145d0f311ef1485f5b95eebecbc758fce01b4bb6@38.146.3.184:17756,6caabc35628a51bbf9c80ead303f13b3dfae8674@50.19.180.153:26656,51e4e7b04d2f669f5efa53e8d95891fa04e4c5b9@206.125.33.62:26656,2b4efc999c6aaad3cb2456fa5385f16f90e2c3d2@95.217.106.215:11156,31bda14eacbc1c1c537c4b7c2e8d338a06c8c5fd@57.128.37.47:26656,ef9ac611d9ca1c3a9fae22199f449d7c1082a0d9@65.108.233.109:17756"
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -243,8 +239,8 @@ function initNode() {
   sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 10/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 40/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -398,7 +394,7 @@ function downloadSnapshot() {
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
   sudo rm -rf $HOME/$NODE_FOLDER/data
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+  curl -o - -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER --strip-components 2
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }

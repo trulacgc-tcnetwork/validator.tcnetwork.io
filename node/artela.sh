@@ -1,32 +1,32 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.20.5
 
 # Node
-NODE_REPO=https://github.com/sge-network/sge.git
-NODE_VERSION=v1.1.0
-NODE_REPO_FOLDER=sge
-NODE_DAEMON=sged
-NODE_ID=sgenet-1
-NODE_DENOM=usge
-NODE_FOLDER=.sge
+NODE_VERSION=main
+NODE_REPO=https://github.com/artela-network/artela
+NODE_REPO_FOLDER=artela
+NODE_DAEMON=artelad
+NODE_ID=artela_11822-1
+NODE_DENOM=UART
+NODE_FOLDER=.artelad
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://ss.sge.nodestake.top/genesis.json
+NODE_GENESIS_FILE=https://ss-t.artela.nodestake.org/genesis.json
 NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://ss.sge.nodestake.top/addrbook.json
+NODE_ADDR_BOOK_FILE=https://ss-t.artela.nodestake.org/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=sge
+NODE_SERVICE_NAME=artela
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://ss.sge.nodestake.top/2023-11-08_sge_943629.tar.lz4
+SNAPSHOT_PATH=https://ss-t.artela.nodestake.org/2024-01-16_artela_980756.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -124,17 +124,13 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  cd $HOME
+  wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
-  fi
+  echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then
@@ -150,12 +146,6 @@ function installGo() {
 }
 
 function installNode() {
-  # remove previous tools
-  echo -e "\e[1m\e[32mRemoving previous installed tools... \e[0m" && sleep 1
-  if [ -f "/usr/local/bin/$NODE_DAEMON" ]; then
-    sudo rm -rf usr/local/bin/$NODE_DAEMON
-  fi
-
   # Install binary
   echo -e "\e[1m\e[32mInstalling Node... \e[0m" && sleep 1
   cd $HOME
@@ -187,34 +177,25 @@ function initNode() {
   if [ -z "$PROFILE_INCLUDED" ]; then
     echo "export NODE_NAME=\"${NODE_NAME}\"" >>$HOME/.profile
     echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
+    echo "export NODE_ID=${NODE_ID}" >>$HOME/.profile
     source ~/.profile
   fi
 
   # Initialize Node
   if [ ! -d "$HOME/$NODE_FOLDER" ]; then
+    echo "Init chain"
     $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
-
-    # keyring
-    $NODE_DAEMON config keyring-backend test
   fi
 
   # Download Genesis
   cd $HOME
   echo -e "\e[1m\e[32mDownloading Genesis File... \e[0m" && sleep 1
 
-  if $NODE_GENESIS_ZIP; then
-    echo "Downloading zip file..."
-    curl -s $NODE_GENESIS_FILE -o $HOME/genesis.json.gz
-    gunzip $HOME/genesis.json.gz
-    sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
-  else
-    echo "Downloading plain genesis file..."
-    curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
-  fi
+  wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
 
   # Download addrbook
-  if $NODE_ADDR_BOOK; then
-    curl -Ls $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
+  if [ $NODE_ADDR_BOOK ]; then
+    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
   fi
 
   echo "Setting configuration..."
@@ -223,12 +204,8 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS="6a727128f427d166d90a1185c7965b178235aaee@rpc.sge.nodestake.top:666,a973f744ec9b00cd387f62fc8d69ae1d753c060e@seed.sge.cros-nest.com:26656"
-  sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
-
-  # peer
-  PEERS=""
-  sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
+  SEEDS="76492a1356c14304bdd7ec946a6df0b57ba51fe2@json-rpc.testnet2.entangle.fi:26656"
+  sed -i.default "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # log
   echo "Setting Log..."
@@ -240,11 +217,7 @@ function initNode() {
 
   # prometheus
   echo "Setting Prometheus..."
-  sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
-
-  # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i -e "s/prometheus = false/prometheus = true/" $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -253,7 +226,7 @@ function initNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.001$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -371,7 +344,7 @@ function createValidator() {
   echo -e "\e[1m\e[32mCreating Valdiator Tx with wallet $NODE_WALLET... \e[0m" && sleep 1
 
   $NODE_DAEMON tx staking create-validator \
-    --amount 1000000$NODE_DENOM \
+    --amount=1000000$NODE_DENOM \
     --pubkey=$($NODE_DAEMON tendermint show-validator) \
     --from="$NODE_WALLET" \
     --chain-id=$NODE_ID \
@@ -383,8 +356,10 @@ function createValidator() {
     --website="$YOUR_WEBSITE" \
     --identity "$YOUR_IDENTITY" \
     --min-self-delegation="1" \
-    --gas="auto" \
-    --node=tcp://127.0.0.1:${NODE_PORT}657
+    --gas=500000 \
+    --gas-prices="10$NODE_DENOM" \
+    --node=tcp://127.0.0.1:${NODE_PORT}657 \
+    --keyring-backend=file
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
 }
@@ -398,7 +373,7 @@ function downloadSnapshot() {
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
   sudo rm -rf $HOME/$NODE_FOLDER/data
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+  curl -o - -L $SNAPSHOT_PATH | lz4 -c -d - | tar -x -C $HOME/$NODE_FOLDER
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }
@@ -479,8 +454,6 @@ function upgradeNode() {
 }
 
 function helpfullCommand() {
-  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
-
   echo "Check log:"
   echo "sudo journalctl -u $NODE_SERVICE_NAME -f -o cat"
   echo ""
@@ -491,6 +464,7 @@ function helpfullCommand() {
   echo "$NODE_DAEMON tx slashing unjail --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --fees 10000$NODE_DENOM -y"
   echo ""
   echo "Withdraw reward and commission:"
+  VALIDATOR_ADDRESS=$($NODE_DAEMON keys show $NODE_WALLET --bech val -a)
   echo "$NODE_DAEMON tx distribution withdraw-rewards $VALIDATOR_ADDRESS --from $NODE_WALLET --chain-id $NODE_ID --node tcp://127.0.0.1:${NODE_PORT}657 --commission -y"
   echo ""
   echo "Delegate:"
@@ -502,8 +476,8 @@ function helpfullCommand() {
 }
 
 function checksum() {
-  NODE_FOLDER=.ollo
-  NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
+  NODE_FOLDER=.gitopia
+  NODE_GENESIS_CHECKSUM=0cf5c55e6ea1fbcebccadba0f6dc0b83ac76d1b608487a06978956404ce33e66
 
   if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
     echo "Genesis checksum is match"
@@ -516,10 +490,10 @@ function checksum() {
 function checkProfile() {
   PROFILE_INCLUDED=$(grep "NODE_NAME" $HOME/.profile)
   if [ -z "$PROFILE_INCLUDED" ]; then
-    echo "add to profile"
+    echo "add to bash profile"
     echo "export NODE_NAME=${NODE_NAME}" >>$HOME/.profile
     echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
-    source $HOME/.profile
+    source ~/.profile
   else
     echo "already added to bash profile"
   fi
@@ -531,6 +505,6 @@ main
 # checksum
 # checkProfile
 
-# Run:
+# Run
 # On Mac: sh node-tool.sh
-# On Ubuntu: sudo chmod +x node-tool.sh && ./node-tool.sh
+# On Ubuntu: ./node-tool.sh

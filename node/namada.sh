@@ -1,15 +1,18 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.20.5
 
 # Node
 NODE_REPO=https://github.com/anoma/namada
-NODE_VERSION=v0.13.0
-NODE_HASH=v0.1.4-abciplus
+NODE_VERSION=v0.28.0
+CBFT_VERSION=v0.37.2
+CHAIN_ID=public-testnet-15.0dacadb8d663
+
+NODE_HASH=
 NODE_REPO_FOLDER=
 NODE_DAEMON=
-NODE_ID=
+
 NODE_DENOM=
 NODE_FOLDER=.namada
 NODE_GENESIS_ZIP=false
@@ -23,93 +26,82 @@ NODE_SERVICE_NAME=namada
 
 # Validator
 VALIDATOR_NAME="TC Network"
-VALIDATOR_WALLET="tc-network"
+VALIDATOR_WALLET="tc network"
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Testnet staking UI https://testnet.explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
-
-
 function main {
-  echo "                                        NODE INSTALLER                                       ";
-  echo "";
-  echo "▒███████▒ ▒███▒ ▒███▒    ▒███▒▒██████▒▒███████▒▒██▒         ▒██▒  ▒████▒   ▒█████▒ ▒███▒  ▒██▒";
-  echo "   ▒█▒  ▒█▒      ▒█▒ █▒   ▒█▒ ▒█▒        ▒█▒    ▒█▒         ▒█▒ ▒█▒    ▒█▒ ▒█▒  ▒█▒ ▒█▒ ▒█▒   ";
-  echo "   ▒█▒ ▒█▒       ▒█▒  █▒  ▒█▒ ▒███▒      ▒█▒     ▒█▒   ▒   ▒█▒ ▒█▒      ▒█▒▒█▒██▒   ▒█▒█▒     ";
-  echo "   ▒█▒  ▒█▒      ▒█▒   █▒ ▒█▒ ▒█▒        ▒█▒      ▒█▒ ▒█▒ ▒█▒   ▒█▒    ▒█▒ ▒█▒ ▒█▒  ▒█▒ ▒█▒   ";
-  echo "   ▒█▒    ▒███▒ ▒███▒    ▒███▒▒██████▒   ▒█▒       ▒██▒ ▒██▒      ▒████▒   ▒█▒  ▒██▒███▒  ▒██▒";
-  echo "";
-  echo "Select action by number to do (Example: \"1\"):";
-  echo "";
-  echo "[1] Install Library Dependencies";
-  echo "[2] Install Go";
-  echo "[3] Install Node";
-  echo "[4] Setup Node";
-  echo "[5] Setup Service";
-  echo "[6] Create/Import Wallet";
-  echo "[7] Create validator";
-  echo "[8] Download Snapshot";
-  echo "[9] Restart Service";
-  echo "";
-  echo "[A] Remove Node";
-  echo "[B] Upgrade Node";
-  echo "[X] Helpful commands";
-  echo "";
+  echo "                                        NODE INSTALLER                                       "
+  echo ""
+  echo "▒███████▒ ▒███▒ ▒███▒    ▒███▒▒██████▒▒███████▒▒██▒         ▒██▒  ▒████▒   ▒█████▒ ▒███▒  ▒██▒"
+  echo "   ▒█▒  ▒█▒      ▒█▒ █▒   ▒█▒ ▒█▒        ▒█▒    ▒█▒         ▒█▒ ▒█▒    ▒█▒ ▒█▒  ▒█▒ ▒█▒ ▒█▒   "
+  echo "   ▒█▒ ▒█▒       ▒█▒  █▒  ▒█▒ ▒███▒      ▒█▒     ▒█▒   ▒   ▒█▒ ▒█▒      ▒█▒▒█▒██▒   ▒█▒█▒     "
+  echo "   ▒█▒  ▒█▒      ▒█▒   █▒ ▒█▒ ▒█▒        ▒█▒      ▒█▒ ▒█▒ ▒█▒   ▒█▒    ▒█▒ ▒█▒ ▒█▒  ▒█▒ ▒█▒   "
+  echo "   ▒█▒    ▒███▒ ▒███▒    ▒███▒▒██████▒   ▒█▒       ▒██▒ ▒██▒      ▒████▒   ▒█▒  ▒██▒███▒  ▒██▒"
+  echo ""
+  echo "Select action by number to do (Example: \"1\"):"
+  echo ""
+  echo "[1] Install Library Dependencies"
+  echo "[2] Install Cargo & Node"
+  echo "[3] Install Go"
+  echo "[4] Install ProtoBuffer"
+  echo "[5] Install Node"
+  echo "[6] Join Network"
+  echo "[7] Install Service"
+  echo "[8] Restart Service"
+
+  echo ""
+  echo "[A] Remove Node"
+  echo "[X] Helpful commands"
+  echo ""
   read -p "[SELECT] > " input
 
   case $input in
-    "1")
-      installDependency
-      exit 0
-      ;;
-    "2")
-      installGo
-      exit 0
-      ;;
-    "3")
-      installNode
-      exit 0
-      ;;
-    "4")
-      initNode
-      exit 0
-      ;;
-    "5")
-      installService
-      exit 0
-      ;;
-    "6")
-      createImportWallet
-      exit 0
-      ;;
-    "7")
-      createValidator
-      exit 0
-      ;;
-    "8")
-      downloadSnapshot
-      exit 0
-      ;;
-    "9")
-      restartService
-      exit 0
-      ;;
-    "A")
-      removeNode
-      exit 0
-      ;;
-    "B")
-      upgradeNode
-      exit 0
-      ;;
-    "X")
-      helpfullCommand
-      exit 0
-      ;;
-    *)
-      echo "Invalid input - $input\n"
-      ;;
-    esac
+  "1")
+    installDependency
+    exit 0
+    ;;
+  "2")
+    installCargoNode
+    exit 0
+    ;;
+  "3")
+    installGo
+    exit 0
+    ;;
+  "4")
+    installProtoBuffer
+    exit 0
+    ;;
+  "5")
+    installNode
+    exit 0
+    ;;
+  "6")
+    joinNetwork
+    exit 0
+    ;;
+  "7")
+    installService
+    exit 0
+    ;;
+  "8")
+    restartService
+    exit 0
+    ;;
+  "A")
+    removeNode
+    exit 0
+    ;;
+  "X")
+    helpfullCommand
+    exit 0
+    ;;
+  *)
+    echo "Invalid input - $input\n"
+    ;;
+  esac
 }
 
 function installDependency() {
@@ -117,15 +109,23 @@ function installDependency() {
 
   cd $HOME
   sudo apt update && sudo apt upgrade -y
-  sudo apt install curl tar wget clang pkg-config libssl-dev libclang-dev jq build-essential bsdmainutils git make ncdu gcc git jq chrony liblz4-tool -y
-  sudo apt install -y uidmap dbus-user-session
+  sudo apt install curl tar wget clang pkg-config git make libssl-dev libclang-dev libclang-12-dev -y
+  sudo apt install jq build-essential bsdmainutils ncdu gcc git-core chrony liblz4-tool -y
+  sudo apt install original-awk uidmap dbus-user-session protobuf-compiler unzip -y
+  sudo apt install libudev-dev
+}
 
+function installCargoNode() {
   cd $HOME
-    sudo apt update
-    sudo curl https://sh.rustup.rs -sSf | sh -s -- -y
-    . $HOME/.cargo/env
-    curl https://deb.nodesource.com/setup_16.x | sudo bash
-    sudo apt install cargo nodejs -y < "/dev/null"
+  sudo apt update
+  sudo curl https://sh.rustup.rs -sSf | sh -s -- -y
+  . $HOME/.cargo/env
+  curl https://deb.nodesource.com/setup_18.x | sudo bash
+  sudo apt install cargo nodejs -y <"/dev/null"
+
+  echo -e "\e[1m\e[32mInstall Dependency successful. \e[0m" && sleep 1
+  cargo --version
+  node -v
 }
 
 function installGo() {
@@ -133,25 +133,49 @@ function installGo() {
 
   if ! [ -x "$(command -v go)" ]; then
     cd $HOME
-    wget "https://golang.org/dl/go$ver.linux-amd64.tar.gz"
+    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
     sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$ver.linux-amd64.tar.gz"
-    rm "go$ver.linux-amd64.tar.gz"
-    echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >> ~/.bash_profile
+    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+    rm "go$GO_VERSION.linux-amd64.tar.gz"
+    echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >>~/.bash_profile
     source ~/.bash_profile
   fi
 
-  echo -e "If go version return nothing, try to apply again: source $HOME/.profile" && sleep 1  
+  go version
+
+  echo -e "If go version return nothing, try to apply again: source $HOME/.profile" && sleep 1
+}
+
+function installProtoBuffer() {
+  echo -e "\e[1m\e[32mInstalling ProtoBuffer... \e[0m" && sleep 1
+
+  cd $HOME && rustup update
+  PROTOC_ZIP=protoc-23.3-linux-x86_64.zip
+  curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v23.3/$PROTOC_ZIP
+  sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+  sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+  rm -f $PROTOC_ZIP
+
+  echo -e "\e[1m\e[32mInstall ProtoBuffer successful. \e[0m" && sleep 1
+  protoc --version
 }
 
 function installNode() {
   echo -e "\e[1m\e[32mSetting variables... \e[0m" && sleep 1
 
-  echo "export NAMADA_TAG=$NODE_VERSION" >> ~/.bash_profile
-  echo "export TM_HASH=$NODE_HASH" >> ~/.bash_profile
-  echo "export CHAIN_ID=$NODE_ID" >> ~/.bash_profile
-  echo "export VALIDATOR_ALIAS=$VALIDATOR_NAME" >> ~/.bash_profile
-  echo "export WALLET=$VALIDATOR_WALLET" >> ~/.bash_profile
+  #CHECK your vars in /.bash_profile and change if they not correctly
+  sed -i '/public-testnet/d' "$HOME/.bash_profile"
+  sed -i '/NAMADA_TAG/d' "$HOME/.bash_profile"
+  sed -i '/WALLET_ADDRESS/d' "$HOME/.bash_profile"
+  sed -i '/CBFT/d' "$HOME/.bash_profile"
+
+  #Setting up vars
+  echo "export NAMADA_TAG=$NODE_VERSION" >>~/.bash_profile
+  echo "export CBFT=$CBFT_VERSION" >>~/.bash_profile
+  echo "export NAMADA_CHAIN_ID=$CHAIN_ID" >>~/.bash_profile
+  echo "export VALIDATOR_ALIAS=$VALIDATOR_NAME" >>~/.bash_profile
+  echo "export WALLET=$VALIDATOR_WALLET" >>~/.bash_profile
+  echo "export BASE_DIR=$HOME/.local/share/namada" >>~/.bash_profile
 
   source ~/.bash_profile
   echo -e "\e[1m\e[32mSetting variables finished. \e[0m" && sleep 1
@@ -159,24 +183,24 @@ function installNode() {
   echo -e "\e[1m\e[32mInstalling node... \e[0m" && sleep 1
   cd $HOME && git clone https://github.com/anoma/namada && cd namada && git checkout $NAMADA_TAG
   make build-release
-  cargo --version
 
-  cd $HOME && git clone https://github.com/heliaxdev/tendermint && cd tendermint && git checkout $TM_HASH
+  echo -e "\e[1m\e[32mInstalling cometbft... \e[0m" && sleep 1
+  cd $HOME && git clone https://github.com/cometbft/cometbft.git && cd cometbft && git checkout $CBFT
   make build
 
-  cd $HOME && cp $HOME/tendermint/build/tendermint  /usr/local/bin/tendermint && cp "$HOME/namada/target/release/namada" /usr/local/bin/namada && cp "$HOME/namada/target/release/namadac" /usr/local/bin/namadac && cp "$HOME/namada/target/release/namadan" /usr/local/bin/namadan && cp "$HOME/namada/target/release/namadaw" /usr/local/bin/namadaw
-  tendermint version
+  cd $HOME
+  sudo cp $HOME/cometbft/build/cometbft /usr/local/bin/cometbft
+  sudo cp $HOME/namada/target/release/* /usr/local/bin
+
+  cometbft version
   namada --version
 
   echo -e "\e[1m\e[32mInstalling node finished... \e[0m" && sleep 1
 }
 
-#run fullnode
-function initNode() {
-  cd $HOME && namada client utils join-network --chain-id $CHAIN_ID
-
-  cd $HOME && wget https://github.com/heliaxdev/anoma-network-config/releases/download/public-testnet-1.0.05ab4adb9db/public-testnet-1.0.05ab4adb9db.tar.gz
-  tar xvzf "$HOME/public-testnet-1.0.05ab4adb9db.tar.gz"
+function joinNetwork() {
+  cd $HOME
+  namadac utils join-network --chain-id $CHAIN_ID --pre-genesis-path "$HOME/.local/share/namada/pre-genesis/$VALIDATOR_ALIAS"
 }
 
 function installService() {
@@ -184,25 +208,23 @@ function installService() {
 
   if [ ! -f "/etc/systemd/system/$NODE_SERVICE_NAME.service" ]; then
 
-sudo tee <<EOF >/dev/null /etc/systemd/system/$NODE_SERVICE_NAME.service
-  [Unit]
-  Description=$NODE_SERVICE_NAME Node
-  After=network-online.target
-
-  [Service]
-  User=$USER
-  WorkingDirectory=$HOME/$NODE_FOLDER
-  Environment=NAMADA_LOG=debug
-  Environment=NAMADA_TM_STDOUT=true
-  ExecStart=/usr/local/bin/namada --base-dir=$HOME/$NODE_FOLDER node ledger run 
-  StandardOutput=syslog
-  StandardError=syslog
-  Restart=on-failure
-  RestartSec=3
-  LimitNOFILE=65535
-
-  [Install]
-  WantedBy=multi-user.target
+    sudo tee /etc/systemd/system/$NODE_SERVICE_NAME.service >/dev/null <<EOF
+[Unit]
+Description=$NODE_SERVICE_NAME
+After=network-online.target
+[Service]
+User=$USER
+WorkingDirectory=$HOME/.local/share/namada
+Environment=TM_LOG_LEVEL=p2p:none,pex:error
+Environment=NAMADA_CMT_STDOUT=true
+ExecStart=/usr/local/bin/namada node ledger run 
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=10
+LimitNOFILE=65535
+[Install]
+WantedBy=multi-user.target
 EOF
 
     # Enable systemd service
@@ -217,71 +239,30 @@ EOF
   fi
 }
 
-#Make wallet and run validator
-function createImportWallet() {
-  cd $HOME
-  namada wallet address gen --alias $WALLET
+function restartService() {
+  echo -e "\e[1m\e[32mRestarting service... \e[0m" && sleep 1
 
-  echo -e "\e[1m\e[32mCreate/Import wallet successful. \e[0m" && sleep 1
+  sudo systemctl restart $NODE_SERVICE_NAME
+  sudo systemctl status $NODE_SERVICE_NAME
+
+  echo -e "\e[1m\e[32mStart service done... \e[0m" && sleep 1
+  echo -e "\e[1m\e[32mRun command to check log: sudo journalctl -u $NODE_SERVICE_NAME -f -o cat \e[0m" && sleep 1
 }
 
+function removeNode() {
+  cd $HOME && mkdir $HOME/namada_backup
+  cp -r $HOME/.local/share/namada/pre-genesis $HOME/namada_backup/
+  sudo systemctl stop $NODE_SERVICE_NAME
+  sudo systemctl disable $NODE_SERVICE_NAME
+  rm /etc/systemd/system/namada* -rf
+  rm $(which namada) -rf
+  rm /usr/local/bin/namada* /usr/local/bin/cometbft -rf
+  rm $HOME/.namada* -rf
+  rm $HOME/.local/share/namada -rf
+  rm $HOME/namada -rf
+  rm $HOME/cometbft -rf
+}
 
-#waiting full synchronization then ctrl+c
+function helpfullCommand() {
 
-namadac transfer \
-    --token NAM \
-    --amount 1000 \
-    --source faucet \
-    --target $WALLET \
-    --signer $WALLET
-  
-#enter validator
-
-namada client init-validator --alias $VALIDATOR_ALIAS --source $WALLET --commission-rate 0.05 --max-commission-rate-change 0.01 --gas-limit 10000000
-
-#enter pass
-
-cd $HOME
-namadac transfer \
-    --token NAM \
-    --amount 1000 \
-    --source faucet \
-    --target $VALIDATOR_ALIAS \
-    --signer $VALIDATOR_ALIAS
-	
-#use faucet again because min stake 1000 and you need some more NAM
-namadac transfer \
-    --token NAM \
-    --amount 1000 \
-    --source faucet \
-    --target $VALIDATOR_ALIAS \
-    --signer $VALIDATOR_ALIAS
-	
-#check balance
-namada client balance --owner $VALIDATOR_ALIAS --token NAM
-
-#stake your funds
-namada client bond \
-  --validator $VALIDATOR_ALIAS \
-  --amount 1500 \
-  --gas-limit 10000000
-  
-#print your validator address
-export WALLET_ADDRESS=`cat "$HOME/.namada/public-testnet-1.0.05ab4adb9db/wallet.toml" | grep address`
-echo -e '\n\e[45mYour wallet:' $WALLET_ADDRESS '\e[0m\n'
-
-#waiting more than 2 epoch and check your status
-namada client bonded-stake
-
-#UPDATE for new release
-cd $HOME/namada
-NEWTAG=v0.12.2
-git fetch
-git checkout $NEWTAG
-make build-release
-cd $HOME && sudo systemctl stop namadad
-rm /usr/local/bin/namada /usr/local/bin/namadac /usr/local/bin/namadan /usr/local/bin/namadaw
-cd $HOME && cp "$HOME/namada/target/release/namada" /usr/local/bin/namada && cp "$HOME/namada/target/release/namadac" /usr/local/bin/namadac && cp "$HOME/namada/target/release/namadan" /usr/local/bin/namadan && cp "$HOME/namada/target/release/namadaw" /usr/local/bin/namadaw
-sudo systemctl restart namadad
-namada --version
-sudo journalctl -u namadad -f -o cat
+}

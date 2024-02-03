@@ -1,32 +1,32 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.4
+GO_VERSION=1.20.4
 
 # Node
-NODE_REPO=https://github.com/sge-network/sge.git
-NODE_VERSION=v1.1.0
-NODE_REPO_FOLDER=sge
-NODE_DAEMON=sged
-NODE_ID=sgenet-1
-NODE_DENOM=usge
-NODE_FOLDER=.sge
+NODE_REPO=https://github.com/elys-network/elys.git
+NODE_VERSION=v0.15.0
+NODE_REPO_FOLDER=elys
+NODE_DAEMON=elysd
+NODE_ID=elystestnet-1
+NODE_DENOM=uelys
+NODE_FOLDER=.elys
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://ss.sge.nodestake.top/genesis.json
+NODE_GENESIS_FILE=https://ss-t.elys.nodestake.top/genesis.json
 NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://ss.sge.nodestake.top/addrbook.json
+NODE_ADDR_BOOK_FILE=https://ss-t.elys.nodestake.top/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=sge
+NODE_SERVICE_NAME=elys
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://testnet.explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://ss.sge.nodestake.top/2023-11-08_sge_943629.tar.lz4
+SNAPSHOT_PATH=https://ss-t.elys.nodestake.top/2023-11-18_elys_3892686.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -124,17 +124,13 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  cd $HOME
+  wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
-  fi
+  echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then
@@ -223,16 +219,20 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS="6a727128f427d166d90a1185c7965b178235aaee@rpc.sge.nodestake.top:666,a973f744ec9b00cd387f62fc8d69ae1d753c060e@seed.sge.cros-nest.com:26656"
+  SEEDS=""
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS=""
+  PEERS="8cc16cba9ccb2e1a555acb29bf53a9198ecae7ce@209.126.2.211:53656,61284a4d71cd3a33771640b42f40b2afda389a1e@5.101.138.254:26656,ae29d8da169214e201c03789858b4228b56a004a@148.251.177.108:22056,609c64cc50fb4ebbe7cae3347545d3950ea2c018@65.108.195.29:23656,def2a9a89a7cf66e7e73f277384e6a66f82a68f4@95.214.55.138:13656,a065d05a896c4a2e50451aa2994b1f37e95f92c2@195.3.220.169:26656,b7b044df4dc2e709972b79c04d9eb7d921e3b45f@116.202.227.117:53656,98143b5dca162ba726536d07a6af6500d3e6fe1e@65.108.200.40:38656,d5519e378247dfb61dfe90652d1fe3e2b3005a5b@65.109.68.190:15356,501767323c5223bfe138d916189cb5427f7e3931@104.193.254.42:27656,a346d8325a9c3cd40e32236eb6de031d1a2d895e@95.217.107.96:26156"
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
   echo "Setting Log..."
   sed -i -e "s/^log_level *=.*/log_level = \"warn\"/" $CONFIG_PATH
+
+  # timeout_commit
+  echo "Setting timeout_commit..."
+  sed -i -e "s/^timeout_commit *=.*/timeout_commit = \"3s\"/" $CONFIG_PATH
 
   # indexer
   echo "Setting Indexer..."
@@ -243,8 +243,8 @@ function initNode() {
   sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 10/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 40/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -398,7 +398,7 @@ function downloadSnapshot() {
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
   sudo rm -rf $HOME/$NODE_FOLDER/data
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+  curl -o - -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }

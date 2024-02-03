@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://ss-t.entangle.nodestake.top/2023-09-20_entangle_5203847.tar.lz4
+SNAPSHOT_PATH=https://ss-t.entangle.nodestake.top/2024-01-16_entangle_1714374.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -124,28 +124,23 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  cd $HOME
+  wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
-    if [ -z "$PATH_INCLUDES_GO" ]; then
-      echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >>$HOME/.profile
-      echo "export GOPATH=$HOME/go" >>$HOME/.profile
-    fi
-
-    source ~/.profile
-    go version
-
-    echo -e "If go version response nothing, try to apply again: source ~/.profile" && sleep 1
-    echo -e "\e[1m\e[32mInstallation Go finished. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m"
-    go version
+  PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
+  if [ -z "$PATH_INCLUDES_GO" ]; then
+    echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >>$HOME/.profile
+    echo "export GOPATH=$HOME/go" >>$HOME/.profile
   fi
+
+  source ~/.profile
+  go version
+
+  echo -e "If go version response nothing, try to apply again: source ~/.profile" && sleep 1
+  echo -e "\e[1m\e[32mInstallation Go finished. \e[0m" && sleep 1
 }
 
 function installNode() {
@@ -207,7 +202,7 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS="f456ca39de85b3d55c30d4ce7e2af68c023bc0bf@rpc-t.entangle.nodestake.top:666"
+  SEEDS="76492a1356c14304bdd7ec946a6df0b57ba51fe2@35.175.80.14:26656"
   sed -i.default "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # log

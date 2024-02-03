@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.3
+GO_VERSION=1.21.6
 
 # Node
 NODE_REPO=https://github.com/TERITORI/teritori-chain.git
-NODE_VERSION=v1.4.0
+NODE_VERSION=v2.0.6
 NODE_REPO_FOLDER=teritori-chain
 NODE_DAEMON=teritorid
 NODE_ID=teritori-1
@@ -123,17 +123,13 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
-  if [ ! -d "/usr/local/go" ]; then
-    cd $HOME
-    wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
-    sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
+  cd $HOME
+  wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$GO_VERSION.linux-amd64.tar.gz"
+  sudo rm "go$GO_VERSION.linux-amd64.tar.gz"
 
-    echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
-  else
-    echo -e "\e[1m\e[32mGo already installed with version: \e[0m" && sleep 1
-  fi
+  echo -e "\e[1m\e[32mInstallation Go done. \e[0m" && sleep 1
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then
@@ -203,15 +199,13 @@ function initNode() {
   else
     echo "Downloading plain genesis file..."
     #curl -s $NODE_GENESIS_FILE > $HOME/$NODE_FOLDER/config/genesis.json
-    wget -O genesis.json $NODE_GENESIS_FILE --inet4-only
-    mv genesis.json $HOME/$NODE_FOLDER/config
+    curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
   fi
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
     #wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
-    wget -O addrbook.json $NODE_ADDR_BOOK_FILE --inet4-only
-    mv addrbook.json $HOME/$NODE_FOLDER/config
+    curl -Ls $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
   fi
 
   echo "Setting configuration..."
