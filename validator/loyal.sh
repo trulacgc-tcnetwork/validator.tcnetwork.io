@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.3
+GO_VERSION=1.22.2
 
 # Node
 NODE_REPO=https://github.com/LoyalLabs/loyal.git
@@ -12,7 +12,7 @@ NODE_ID=loyal-main-02
 NODE_DENOM=ulyl
 NODE_FOLDER=.loyal
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://raw.githubusercontent.com/LoyalLabs/net/main/mainnet/genesis.json
+NODE_GENESIS_FILE=https://snapshots.polkachu.com/genesis/loyal/genesis.json
 NODE_ADDR_BOOK=false
 NODE_ADDR_BOOK_FILE=
 
@@ -25,7 +25,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots.polkachu.com/snapshots/loyal/loyal_3224112.tar.lz4
+SNAPSHOT_PATH=https://snapshots.polkachu.com/snapshots/loyal/loyal_10337544.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=

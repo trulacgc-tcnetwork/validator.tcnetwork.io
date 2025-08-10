@@ -1,24 +1,24 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.21.6
+GO_VERSION=1.20.5
 
 # Node
-NODE_REPO=https://github.com/aura-nw/aura.git
-NODE_VERSION=v0.9.3
-NODE_REPO_FOLDER=aura
-NODE_DAEMON=aurad
-NODE_ID=aura_6322-2
-NODE_DENOM=uaura
-NODE_FOLDER=.aura
-NODE_GENESIS_ZIP=true
-NODE_GENESIS_FILE=https://images.aura.network/aura_6322-2-genesis.tar.gz
+NODE_REPO=https://github.com/evmos/evmos.git
+NODE_VERSION=v18.1.0
+NODE_REPO_FOLDER=evmos
+NODE_DAEMON=evmosd
+NODE_ID=evmos_9001-2
+NODE_DENOM=aevmos
+NODE_FOLDER=.evmosd
+NODE_GENESIS_ZIP=false
+NODE_GENESIS_FILE=https://archive.evmos.org/mainnet/genesis.json
 NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Aura/addrbook.json
+NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Evmos/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=aura
+NODE_SERVICE_NAME=evmos
 
 # Validator
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
@@ -26,7 +26,10 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://aura.snapshot.stavr.tech/aura-snap.tar.lz4
+SNAPSHOT_PATH=https://snapshots.polkachu.com/snapshots/evmos/evmos_21302453.tar.lz4
+
+# StateSync
+SNAP_RPC=
 
 # Upgrade
 UPGRADE_PATH=
@@ -52,6 +55,7 @@ function main {
   echo "[6] Create/Import Wallet"
   echo "[7] Create validator"
   echo "[8] Download Snapshot"
+  echo "[8b] State Sync"
   echo "[9] Restart Service"
   echo ""
   echo "[A] Remove Node"
@@ -97,6 +101,10 @@ function main {
     downloadSnapshot
     exit 0
     ;;
+  "8b")
+    stateSync
+    exit 0
+    ;;
   "9")
     restartService
     exit 0
@@ -129,6 +137,8 @@ function installDependency() {
 function installGo() {
   echo -e "\e[1m\e[32mInstalling Go... \e[0m" && sleep 1
 
+  rm -rf $HOME/go
+  sudo rm -rf /usr/local/go
   cd $HOME
   wget "https://golang.org/dl/go$GO_VERSION.linux-amd64.tar.gz"
   sudo rm -rf /usr/local/go
@@ -201,9 +211,9 @@ function setupNode() {
 
   if $NODE_GENESIS_ZIP; then
     echo "Downloading zip file..."
-    wget https://images.aura.network/aura_6322-2-genesis.tar.gz
-    tar -xzvf aura_6322-2-genesis.tar.gz
-    mv aura_6322-2-genesis.json $HOME/.aura/config/genesis.json
+    curl -s $NODE_GENESIS_FILE -o $HOME/genesis.json.gz
+    gunzip $HOME/genesis.json.gz
+    sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
     curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
@@ -246,11 +256,11 @@ function setupNode() {
   # port
   echo "Setting Port..."
   sed -i.bak -e "s%^proxy_app = \"tcp://127.0.0.1:26658\"%proxy_app = \"tcp://127.0.0.1:${NODE_PORT}658\"%; s%^laddr = \"tcp://127.0.0.1:26657\"%laddr = \"tcp://127.0.0.1:${NODE_PORT}657\"%; s%^pprof_laddr = \"localhost:6060\"%pprof_laddr = \"localhost:${NODE_PORT}060\"%; s%^laddr = \"tcp://0.0.0.0:26656\"%laddr = \"tcp://0.0.0.0:${NODE_PORT}656\"%; s%^prometheus_listen_addr = \":26660\"%prometheus_listen_addr = \":${NODE_PORT}660\"%" $CONFIG_PATH
-  sed -i.bak -e "s%^address = \"tcp://0.0.0.0:1317\"%address = \"tcp://0.0.0.0:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"0.0.0.0:9090\"%address = \"0.0.0.0:${NODE_PORT}090\"%; s%^address = \"0.0.0.0:9091\"%address = \"0.0.0.0:${NODE_PORT}091\"%; s%^address = \"0.0.0.0:8545\"%address = \"0.0.0.0:${NODE_PORT}545\"%; s%^ws-address = \"0.0.0.0:8546\"%ws-address = \"0.0.0.0:${NODE_PORT}546\"%" $APP_PATH
+  sed -i.bak -e "s%^address = \"tcp://localhost:1317\"%address = \"tcp://localhost:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"localhost:9090\"%address = \"localhost:${NODE_PORT}090\"%; s%^address = \"localhost:9091\"%address = \"localhost:${NODE_PORT}091\"%; s%^address = \"127.0.0.1:8545\"%address = \"127.0.0.1:${NODE_PORT}545\"%; s%^ws-address = \"127.0.0.1:8546\"%ws-address = \"127.0.0.1:${NODE_PORT}546\"%" $APP_PATH
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.001$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.25$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -393,11 +403,23 @@ function downloadSnapshot() {
 
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
-  rm -rf $HOME/.aura/data
-  curl -o - -L https://aura.snapshot.stavr.tech/aura-snap.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.aura --strip-components 2
-  curl -o - -L https://aura.wasm.stavr.tech/wasm-aura.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.aura --strip-components 2
+  $NODE_DAEMON tendermint unsafe-reset-all --home $HOME/$NODE_FOLDER --keep-addr-book
+  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
+}
+
+function stateSync() {
+
+  LATEST_HEIGHT=$(curl -s $SNAP_RPC/block | jq -r .result.block.header.height)
+  BLOCK_HEIGHT=$((LATEST_HEIGHT - 2000))
+  TRUST_HASH=$(curl -s "$SNAP_RPC/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
+
+  sed -i.bak -E "s|^(enable[[:space:]]+=[[:space:]]+).*$|\1true| ; \
+  s|^(rpc_servers[[:space:]]+=[[:space:]]+).*$|\1\"$SNAP_RPC,$SNAP_RPC\"| ; \
+  s|^(trust_height[[:space:]]+=[[:space:]]+).*$|\1$BLOCK_HEIGHT| ; \
+  s|^(trust_hash[[:space:]]+=[[:space:]]+).*$|\1\"$TRUST_HASH\"|" $HOME/$NODE_FOLDER/config/config.toml
+
 }
 
 function restartService() {

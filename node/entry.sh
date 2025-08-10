@@ -4,8 +4,8 @@
 GO_VERSION=1.21.3
 
 # Node
-NODE_REPO=https://snap.nodex.one/entrypoint-testnet/entrypointd
-NODE_VERSION=v1.2.0
+NODE_REPO=
+NODE_VERSION=
 NODE_REPO_FOLDER=entrypoint
 NODE_DAEMON=entrypointd
 NODE_ID=entrypoint-pubtest-2
@@ -154,18 +154,22 @@ function installNode() {
 
   # Install binary
   echo -e "\e[1m\e[32mInstalling Node... \e[0m" && sleep 1
-  cd $HOME
 
-  if $IS_DAEMON_INSTALL; then
-    wget $NODE_REPO
-    chmod +x $NODE_DAEMON
-    sudo cp $NODE_DAEMON /usr/local/bin
-  else
-    git clone $NODE_REPO
-    cd $NODE_REPO_FOLDER
-    git checkout $NODE_VERSION
-    make install
-  fi
+  cd $HOME
+  wget -O entrypointd https://github.com/entrypoint-zone/testnets/releases/download/v1.3.0/entrypointd-1.3.0-linux-amd64
+  chmod +x $NODE_DAEMON
+  sudo cp $NODE_DAEMON /usr/local/bin
+
+  # if $IS_DAEMON_INSTALL; then
+  #   wget $NODE_REPO
+  #   chmod +x $NODE_DAEMON
+  #   sudo cp $NODE_DAEMON /usr/local/bin
+  # else
+  #   git clone $NODE_REPO
+  #   cd $NODE_REPO_FOLDER
+  #   git checkout $NODE_VERSION
+  #   make install
+  # fi
 
   echo -e "\e[1m\e[32mInstalling Node finished. \e[0m" && sleep 1
 }
@@ -196,26 +200,19 @@ function initNode() {
   $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
 
   # keyring
+  $NODE_DAEMON config chain-id $NODE_ID
   $NODE_DAEMON config keyring-backend test
 
   # Download Genesis
   cd $HOME
   echo -e "\e[1m\e[32mDownloading Genesis File... \e[0m" && sleep 1
 
-  if $NODE_GENESIS_ZIP; then
-    echo "Downloading zip file..."
-    curl -s $NODE_GENESIS_FILE -o $HOME/genesis.json.gz
-    gunzip $HOME/genesis.json.gz
-    sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
-  else
-    echo "Downloading plain genesis file..."
-    curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
-  fi
+  echo "Downloading plain genesis file..."
+  curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
 
   # Download addrbook
-  if $NODE_ADDR_BOOK; then
-    curl -Ls $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
-  fi
+  echo "Downloading addrbook file..."
+  curl -Ls $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
 
   echo "Setting configuration..."
   CONFIG_PATH="$HOME/$NODE_FOLDER/config/config.toml"
@@ -249,7 +246,7 @@ function initNode() {
   # port
   echo "Setting Port..."
   sed -i.bak -e "s%^proxy_app = \"tcp://127.0.0.1:26658\"%proxy_app = \"tcp://127.0.0.1:${NODE_PORT}658\"%; s%^laddr = \"tcp://127.0.0.1:26657\"%laddr = \"tcp://127.0.0.1:${NODE_PORT}657\"%; s%^pprof_laddr = \"localhost:6060\"%pprof_laddr = \"localhost:${NODE_PORT}060\"%; s%^laddr = \"tcp://0.0.0.0:26656\"%laddr = \"tcp://0.0.0.0:${NODE_PORT}656\"%; s%^prometheus_listen_addr = \":26660\"%prometheus_listen_addr = \":${NODE_PORT}660\"%" $CONFIG_PATH
-  sed -i.bak -e "s%^address = \"tcp://0.0.0.0:1317\"%address = \"tcp://0.0.0.0:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"0.0.0.0:9090\"%address = \"0.0.0.0:${NODE_PORT}090\"%; s%^address = \"0.0.0.0:9091\"%address = \"0.0.0.0:${NODE_PORT}091\"%; s%^address = \"0.0.0.0:8545\"%address = \"0.0.0.0:${NODE_PORT}545\"%; s%^ws-address = \"0.0.0.0:8546\"%ws-address = \"0.0.0.0:${NODE_PORT}546\"%" $APP_PATH
+  sed -i.bak -e "s%^address = \"tcp://localhost:1317\"%address = \"tcp://localhost:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"localhost:9090\"%address = \"localhost:${NODE_PORT}090\"%; s%^address = \"localhost:9091\"%address = \"localhost:${NODE_PORT}091\"%; s%^address = \"0.0.0.0:8545\"%address = \"0.0.0.0:${NODE_PORT}545\"%; s%^ws-address = \"0.0.0.0:8546\"%ws-address = \"0.0.0.0:${NODE_PORT}546\"%" $APP_PATH
 
   # gas
   echo "Setting Minimum Gas..."

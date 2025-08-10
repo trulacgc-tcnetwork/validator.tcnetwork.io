@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.3
+GO_VERSION=1.21.6
 
 # Node
 NODE_REPO=https://github.com/planq-network/planq.git
-NODE_VERSION=v1.0.2
+NODE_VERSION=v2.0.4
 NODE_REPO_FOLDER=planq
 NODE_DAEMON=planqd
 NODE_ID=planq_7070-2
 NODE_DENOM=aplanq
 NODE_FOLDER=.planqd
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://snapshots.nodeist.net/planq/genesis.json
+NODE_GENESIS_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Planq/genesis.json
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots.nodeist.net/planq/addrbook.json
+NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Planq/addrbook.json
 
 # Service
 NODE_SERVICE_NAME=planq
@@ -25,93 +25,92 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snap.nodeist.net/planq/planq.tar.lz4
+SNAPSHOT_PATH=https://planq.snapshot.stavr.tech/planqd-snap.tar.lz4
 
 # Upgrade
-UPGRADE_PATH=https://github.com/planq-network/planq/releases/download/v1.0.4
-UPGRADE_FILE=planq_1.0.4_Linux_arm64.tar.gz
-
+UPGRADE_PATH=
+UPGRADE_FILE=
 
 function main {
-  echo "                                        NODE INSTALLER                                       ";
-  echo "";
-  echo "▒███████▒ ▒███▒ ▒███▒    ▒███▒▒██████▒▒███████▒▒██▒         ▒██▒  ▒████▒   ▒█████▒ ▒███▒  ▒██▒";
-  echo "   ▒█▒  ▒█▒      ▒█▒ █▒   ▒█▒ ▒█▒        ▒█▒    ▒█▒         ▒█▒ ▒█▒    ▒█▒ ▒█▒  ▒█▒ ▒█▒ ▒█▒   ";
-  echo "   ▒█▒ ▒█▒       ▒█▒  █▒  ▒█▒ ▒███▒      ▒█▒     ▒█▒   ▒   ▒█▒ ▒█▒      ▒█▒▒█▒██▒   ▒█▒█▒     ";
-  echo "   ▒█▒  ▒█▒      ▒█▒   █▒ ▒█▒ ▒█▒        ▒█▒      ▒█▒ ▒█▒ ▒█▒   ▒█▒    ▒█▒ ▒█▒ ▒█▒  ▒█▒ ▒█▒   ";
-  echo "   ▒█▒    ▒███▒ ▒███▒    ▒███▒▒██████▒   ▒█▒       ▒██▒ ▒██▒      ▒████▒   ▒█▒  ▒██▒███▒  ▒██▒";
-  echo "";
-  echo "Select action by number to do (Example: \"1\"):";
-  echo "";
-  echo "[1] Install Library Dependencies";
-  echo "[2] Install Go";
-  echo "[3] Install Node";
-  echo "[4] Setup Node";
-  echo "[5] Setup Service";
-  echo "[6] Create/Import Wallet";
-  echo "[7] Create validator";
-  echo "[8] Download Snapshot";
-  echo "[9] Restart Service";
-  echo "";
-  echo "[A] Remove Node";
-  echo "[B] Upgrade Node";
-  echo "[X] Helpful commands";
-  echo "";
+  echo "                                        NODE INSTALLER                                       "
+  echo ""
+  echo "▒███████▒ ▒███▒ ▒███▒    ▒███▒▒██████▒▒███████▒▒██▒         ▒██▒  ▒████▒   ▒█████▒ ▒███▒  ▒██▒"
+  echo "   ▒█▒  ▒█▒      ▒█▒ █▒   ▒█▒ ▒█▒        ▒█▒    ▒█▒         ▒█▒ ▒█▒    ▒█▒ ▒█▒  ▒█▒ ▒█▒ ▒█▒   "
+  echo "   ▒█▒ ▒█▒       ▒█▒  █▒  ▒█▒ ▒███▒      ▒█▒     ▒█▒   ▒   ▒█▒ ▒█▒      ▒█▒▒█▒██▒   ▒█▒█▒     "
+  echo "   ▒█▒  ▒█▒      ▒█▒   █▒ ▒█▒ ▒█▒        ▒█▒      ▒█▒ ▒█▒ ▒█▒   ▒█▒    ▒█▒ ▒█▒ ▒█▒  ▒█▒ ▒█▒   "
+  echo "   ▒█▒    ▒███▒ ▒███▒    ▒███▒▒██████▒   ▒█▒       ▒██▒ ▒██▒      ▒████▒   ▒█▒  ▒██▒███▒  ▒██▒"
+  echo ""
+  echo "Select action by number to do (Example: \"1\"):"
+  echo ""
+  echo "[1] Install Library Dependencies"
+  echo "[2] Install Go"
+  echo "[3] Install Node"
+  echo "[4] Setup Node"
+  echo "[5] Setup Service"
+  echo "[6] Create/Import Wallet"
+  echo "[7] Create validator"
+  echo "[8] Download Snapshot"
+  echo "[9] Restart Service"
+  echo ""
+  echo "[A] Remove Node"
+  echo "[B] Upgrade Node"
+  echo "[X] Helpful commands"
+  echo ""
   read -p "[SELECT] > " input
 
   case $input in
-    "1")
-      installDependency
-      exit 0
-      ;;
-    "2")
-      installGo
-      exit 0
-      ;;
-    "3")
-      installNode
-      exit 0
-      ;;
-    "4")
-      initNode
-      exit 0
-      ;;
-    "5")
-      installService
-      exit 0
-      ;;
-    "6")
-      createImportWallet
-      exit 0
-      ;;
-    "7")
-      createValidator
-      exit 0
-      ;;
-    "8")
-      downloadSnapshot
-      exit 0
-      ;;
-    "9")
-      restartService
-      exit 0
-      ;;
-    "A")
-      removeNode
-      exit 0
-      ;;
-    "B")
-      upgradeNode
-      exit 0
-      ;;
-    "X")
-      helpfullCommand
-      exit 0
-      ;;
-    *)
-      echo "Invalid input - $input\n"
-      ;;
-    esac
+  "1")
+    installDependency
+    exit 0
+    ;;
+  "2")
+    installGo
+    exit 0
+    ;;
+  "3")
+    installNode
+    exit 0
+    ;;
+  "4")
+    initNode
+    exit 0
+    ;;
+  "5")
+    installService
+    exit 0
+    ;;
+  "6")
+    createImportWallet
+    exit 0
+    ;;
+  "7")
+    createValidator
+    exit 0
+    ;;
+  "8")
+    downloadSnapshot
+    exit 0
+    ;;
+  "9")
+    restartService
+    exit 0
+    ;;
+  "A")
+    removeNode
+    exit 0
+    ;;
+  "B")
+    upgradeNode
+    exit 0
+    ;;
+  "X")
+    helpfullCommand
+    exit 0
+    ;;
+  *)
+    echo "Invalid input - $input\n"
+    ;;
+  esac
 }
 
 function installDependency() {
@@ -138,15 +137,15 @@ function installGo() {
 
   PATH_INCLUDES_GO=$(grep "$HOME/go/bin" $HOME/.profile)
   if [ -z "$PATH_INCLUDES_GO" ]; then
-    echo "export GOROOT=/usr/local/go" >> $HOME/.profile
-    echo "export GOPATH=$HOME/go" >> $HOME/.profile
-    echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >> $HOME/.profile
+    echo "export GOROOT=/usr/local/go" >>$HOME/.profile
+    echo "export GOPATH=$HOME/go" >>$HOME/.profile
+    echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >>$HOME/.profile
   fi
 
   source $HOME/.profile
   go version
 
-  echo -e "If go version return nothing, try to apply again: source $HOME/.profile" && sleep 1  
+  echo -e "If go version return nothing, try to apply again: source $HOME/.profile" && sleep 1
 }
 
 function installNode() {
@@ -161,7 +160,7 @@ function installNode() {
   cd $HOME
 
   git clone $NODE_REPO
-  cd $NODE_REPO_FOLDER 
+  cd $NODE_REPO_FOLDER
   git checkout $NODE_VERSION
   make install
 
@@ -185,11 +184,11 @@ function initNode() {
 
   PROFILE_INCLUDED=$(grep "NODE_NAME" $HOME/.profile)
   if [ -z "$PROFILE_INCLUDED" ]; then
-    echo "export NODE_NAME=\"${NODE_NAME}\"" >> $HOME/.profile
-    echo "export NODE_PORT=${NODE_PORT}" >> $HOME/.profile
+    echo "export NODE_NAME=\"${NODE_NAME}\"" >>$HOME/.profile
+    echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
     source ~/.profile
   fi
-  
+
   # Initialize Node
   if [ ! -d "$HOME/$NODE_FOLDER" ]; then
     $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
@@ -210,16 +209,13 @@ function initNode() {
   else
     echo "Downloading plain genesis file..."
     #curl -s $NODE_GENESIS_FILE > $HOME/$NODE_FOLDER/config/genesis.json
-    wget -O genesis.json $NODE_GENESIS_FILE --inet4-only
-    mv genesis.json $HOME/$NODE_FOLDER/config
+    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
   fi
-
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
     #wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
-    wget -O addrbook.json $NODE_ADDR_BOOK_FILE --inet4-only
-    mv addrbook.json $HOME/$NODE_FOLDER/config
+    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
   fi
 
   echo "Setting configuration..."
@@ -228,7 +224,7 @@ function initNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS=""
+  SEEDS="5f5cfac5c38506fbb4275c19e87c4107ec48808d@seeds.nodex.one:10710"
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
@@ -283,7 +279,7 @@ function installService() {
 
   if [ ! -f "/etc/systemd/system/$NODE_SERVICE_NAME.service" ]; then
 
-sudo tee <<EOF >/dev/null /etc/systemd/system/$NODE_SERVICE_NAME.service
+    sudo tee /etc/systemd/system/$NODE_SERVICE_NAME.service <<EOF >/dev/null
   [Unit]
   Description=$NODE_SERVICE_NAME Node
   After=network.target
@@ -316,27 +312,27 @@ function createImportWallet() {
   echo "Do you want to create or import wallet?"
   echo "[1] Create new wallet"
   echo "[2] Import wallet"
-  echo "";
+  echo ""
 
   read -p " > " ACTION_WALLET
   read -p "[ENTER YOUR AlIAS WALLET NAME] > " NODE_WALLET
 
   case $ACTION_WALLET in
-    "1")
-      $NODE_DAEMON keys add $NODE_WALLET
-      ;;
+  "1")
+    $NODE_DAEMON keys add $NODE_WALLET
+    ;;
 
-    "2")
-      $NODE_DAEMON keys add $NODE_WALLET --recover
-      ;;
+  "2")
+    $NODE_DAEMON keys add $NODE_WALLET --recover
+    ;;
 
-    *)
-      echo "Invalid input - $input"
-      return 1
-      ;;
+  *)
+    echo "Invalid input - $input"
+    return 1
+    ;;
   esac
 
-  echo "export NODE_WALLET=${NODE_WALLET}" >> $HOME/.profile
+  echo "export NODE_WALLET=${NODE_WALLET}" >>$HOME/.profile
   source $HOME/.profile
 
   echo -e "\e[1m\e[32mCreate/Import wallet successful. \e[0m" && sleep 1
@@ -357,17 +353,17 @@ function createValidator() {
   echo "Please define your information, leave empty to use default (TC Network)"
   read -p "[YOUR WEBSITE] > " YOUR_WEBSITE
   read -p "[YOUR IDENTITY] > " YOUR_IDENTITY
-  read -p "[YOUR DESCRIPTION] > " YOUR_DETAIL 
+  read -p "[YOUR DESCRIPTION] > " YOUR_DETAIL
 
   if [[ $YOUR_WEBSITE = "" ]]; then
     YOUR_WEBSITE=$VALIDATOR_WEBSITE
-  fi 
+  fi
   if [[ $YOUR_IDENTITY = "" ]]; then
     YOUR_IDENTITY=$VALIDATOR_IDENTITY
-  fi 
+  fi
   if [[ $YOUR_DETAIL = "" ]]; then
     YOUR_DETAIL=$VALIDATOR_DETAIL
-  fi 
+  fi
 
   echo -e "YOUR WEBSITE     : \e[1m\e[31m$YOUR_WEBSITE\e[0m"
   echo -e "NODE IDENTITY    : \e[1m\e[31m$YOUR_IDENTITY\e[0m"
@@ -376,21 +372,21 @@ function createValidator() {
   echo -e "\e[1m\e[32mCreating Valdiator Tx with wallet $NODE_WALLET... \e[0m" && sleep 1
 
   $NODE_DAEMON tx staking create-validator \
-  --amount=1000000$NODE_DENOM \
-  --pubkey=$($NODE_DAEMON tendermint show-validator) \
-  --from="$NODE_WALLET" \
-  --chain-id=$NODE_ID \
-  --moniker="$NODE_NAME" \
-  --commission-max-change-rate=0.01 \
-  --commission-max-rate=0.10 \
-  --commission-rate=0.05 \
-  --details="$YOUR_DETAIL" \
-  --website="$YOUR_WEBSITE" \
-  --identity "$YOUR_IDENTITY" \
-  --min-self-delegation="1000000" \
-  --gas-prices="30000000000$NODE_DENOM" \
-  --gas="1000000" \
-  --node=tcp://127.0.0.1:${NODE_PORT}657
+    --amount=1000000$NODE_DENOM \
+    --pubkey=$($NODE_DAEMON tendermint show-validator) \
+    --from="$NODE_WALLET" \
+    --chain-id=$NODE_ID \
+    --moniker="$NODE_NAME" \
+    --commission-max-change-rate=0.01 \
+    --commission-max-rate=0.10 \
+    --commission-rate=0.05 \
+    --details="$YOUR_DETAIL" \
+    --website="$YOUR_WEBSITE" \
+    --identity "$YOUR_IDENTITY" \
+    --min-self-delegation="1000000" \
+    --gas-prices="30000000000$NODE_DENOM" \
+    --gas="1000000" \
+    --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
 }
@@ -403,8 +399,10 @@ function downloadSnapshot() {
 
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
-  $NODE_DAEMON tendermint unsafe-reset-all --home $HOME/$NODE_FOLDER --keep-addr-book
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER --strip-components 2
+  ## $NODE_DAEMON tendermint unsafe-reset-all --home $HOME/$NODE_FOLDER --keep-addr-book
+
+  rm -rf $HOME/.planqd/data
+  curl -o - -L $SNAPSHOT_PATH | lz4 -c -d - | tar -x -C $HOME/$NODE_FOLDER --strip-components 2
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }
@@ -421,7 +419,7 @@ function restartService() {
 
 function removeNode() {
   echo -e "\e[1m\e[32mRemoving Node... \e[0m" && sleep 1
- 
+
   if [ -f "/etc/systemd/system/$NODE_SERVICE_NAME.service" ]; then
     echo "Stop and remove service..."
     sudo systemctl stop $NODE_SERVICE_NAME
@@ -438,7 +436,7 @@ function removeNode() {
   if [ -d "$HOME/$NODE_FOLDER" ]; then
     sudo rm -rf $HOME/$NODE_FOLDER
   fi
-  
+
   echo "Removing Repo folder..."
   if [ -d "$HOME/$NODE_REPO_FOLDER" ]; then
     sudo rm -rf $HOME/$NODE_REPO_FOLDER
@@ -447,7 +445,7 @@ function removeNode() {
   echo "Removing environment variables..."
   unset NODE_NAME
   unset NODE_PORT
-  
+
   echo -e "\e[1m\e[32mRemove Node successful. \e[0m" && sleep 1
 }
 
@@ -469,7 +467,7 @@ function upgradeNode() {
   sudo tar xfv $UPGRADE_FILE
 
   echo -e "\e[1m\e[32mShutting down node... \e[0m" && sleep 1
-  sudo systemctl stop $NODE_SERVICE_NAME 
+  sudo systemctl stop $NODE_SERVICE_NAME
   sudo systemctl status $NODE_SERVICE_NAME
 
   echo -e "\e[1m\e[32mUpgrading node... \e[0m" && sleep 1
@@ -507,7 +505,6 @@ function helpfullCommand() {
   echo ""
 }
 
-
 function checksum() {
   NODE_FOLDER=.ollo
   NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
@@ -524,8 +521,8 @@ function checkProfile() {
   PROFILE_INCLUDED=$(grep "NODE_NAME" $HOME/.profile)
   if [ -z "$PROFILE_INCLUDED" ]; then
     echo "add to profile"
-    echo "export NODE_NAME=${NODE_NAME}" >> $HOME/.profile
-    echo "export NODE_PORT=${NODE_PORT}" >> $HOME/.profile
+    echo "export NODE_NAME=${NODE_NAME}" >>$HOME/.profile
+    echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
     source $HOME/.profile
   else
     echo "already added to bash profile"

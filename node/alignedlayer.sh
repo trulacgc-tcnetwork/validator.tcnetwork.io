@@ -1,32 +1,34 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.21.6
+GO_VERSION=1.22.1
 
 # Node
-NODE_REPO=https://github.com/aura-nw/aura.git
-NODE_VERSION=v0.9.3
-NODE_REPO_FOLDER=aura
-NODE_DAEMON=aurad
-NODE_ID=aura_6322-2
-NODE_DENOM=uaura
-NODE_FOLDER=.aura
-NODE_GENESIS_ZIP=true
-NODE_GENESIS_FILE=https://images.aura.network/aura_6322-2-genesis.tar.gz
+NODE_REPO=https://github.com/yetanotherco/aligned_layer_tendermint.git
+NODE_VERSION=v0.1.0
+NODE_REPO_FOLDER=aligned_layer_tendermint
+NODE_DAEMON=alignedlayerd
+NODE_ID=alignedlayer
+NODE_DENOM=stake
+NODE_FOLDER=.alignedlayer
+NODE_GENESIS_ZIP=false
+NODE_GENESIS_FILE=
 NODE_GENESIS_CHECKSUM=
-NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Aura/addrbook.json
+NODE_ADDR_BOOK=false
+NODE_ADDR_BOOK_FILE=
+
+PEER_ADDR=91.107.239.79,116.203.81.174,88.99.174.203,128.140.3.188
 
 # Service
-NODE_SERVICE_NAME=aura
+NODE_SERVICE_NAME=alignedlayer
 
 # Validator
-VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://testnet.explorer.tcnetwork.io/"
 VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://aura.snapshot.stavr.tech/aura-snap.tar.lz4
+SNAPSHOT_PATH=https://services.staketab.org/aligned-testnet/alignedlayer_2024-03-26.tar
 
 # Upgrade
 UPGRADE_PATH=
@@ -46,8 +48,7 @@ function main {
   echo "[1] Install Library Dependencies"
   echo "[2] Install Go"
   echo "[3] Install Node"
-  echo "[4] Init Node"
-  echo "[4b] Setup Node (Genesis, Seed, Setting)"
+  echo "[4] Setup Node"
   echo "[5] Setup Service"
   echo "[6] Create/Import Wallet"
   echo "[7] Create validator"
@@ -70,15 +71,11 @@ function main {
     exit 0
     ;;
   "3")
-    installNode
+    installNodeByDaemon
     exit 0
     ;;
   "4")
     initNode
-    exit 0
-    ;;
-  "4b")
-    setupNode
     exit 0
     ;;
   "5")
@@ -150,6 +147,16 @@ function installGo() {
   echo -e "If go version return nothing, try to apply again: source $HOME/.profile" && sleep 1
 }
 
+function installNodeByDaemon() {
+  echo -e "\e[1m\e[32mInstalling Node... \e[0m" && sleep 1
+  cd $HOME
+  mkdir -p $HOME/go/bin/
+
+  sudo wget https://github.com/yetanotherco/aligned_layer_tendermint/releases/download/v0.1.0/alignedlayerd
+  sudo chmod +x alignedlayerd
+  mv alignedlayerd $HOME/go/bin/
+}
+
 function installNode() {
   # remove previous tools
   echo -e "\e[1m\e[32mRemoving previous installed tools... \e[0m" && sleep 1
@@ -164,7 +171,19 @@ function installNode() {
   git clone $NODE_REPO
   cd $NODE_REPO_FOLDER
   git checkout $NODE_VERSION
-  make install
+
+  # install ignite
+  curl https://get.ignite.com/cli | bash
+  sudo mv ignite /usr/local/bin/
+  ignite version
+
+  # install cargo
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  cargo --version
+
+  # build
+  make build-linux
+  alignedlayerd version
 
   echo -e "\e[1m\e[32mInstalling Node finished. \e[0m" && sleep 1
 }
@@ -184,35 +203,27 @@ function initNode() {
   echo -e "NODE PORT      : \e[1m\e[31m${NODE_PORT}657\e[0m"
   echo ""
 
-  echo "export NODE_NAME=\"${NODE_NAME}\"" >>$HOME/.profile
-  echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
-  echo "export NODE_ID=${NODE_ID}" >>$HOME/.profile
-  source ~/.profile
+  PROFILE_INCLUDED=$(grep "NODE_NAME" $HOME/.profile)
+  if [ -z "$PROFILE_INCLUDED" ]; then
+    echo "export NODE_NAME=\"${NODE_NAME}\"" >>$HOME/.profile
+    echo "export NODE_PORT=${NODE_PORT}" >>$HOME/.profile
+    source ~/.profile
+  fi
 
   # Initialize Node
-  echo -e "\e[1m\e[32mInit Chain... \e[0m" && sleep 1
-  $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
-}
+  $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID --home $HOME/$NODE_FOLDER
 
-function setupNode() {
   # Download Genesis
   cd $HOME
   echo -e "\e[1m\e[32mDownloading Genesis File... \e[0m" && sleep 1
 
-  if $NODE_GENESIS_ZIP; then
-    echo "Downloading zip file..."
-    wget https://images.aura.network/aura_6322-2-genesis.tar.gz
-    tar -xzvf aura_6322-2-genesis.tar.gz
-    mv aura_6322-2-genesis.json $HOME/.aura/config/genesis.json
-  else
-    echo "Downloading plain genesis file..."
-    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
-  fi
+  echo "Downloading plain genesis file..."
+  curl -s $(echo $PEER_ADDR | cut -d, -f1):26657/genesis | jq '.result.genesis' >$HOME/$NODE_FOLDER/config/genesis.json
 
   # Download addrbook
-  if $NODE_ADDR_BOOK; then
-    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
-  fi
+  #if $NODE_ADDR_BOOK; then
+  # curl -Ls $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config
+  #fi
 
   echo "Setting configuration..."
   CONFIG_PATH="$HOME/$NODE_FOLDER/config/config.toml"
@@ -224,7 +235,8 @@ function setupNode() {
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS=""
+  PEERS="81138177a67195791bbe782fe1ed49f25e582bac@91.107.239.79:26656,c5d0498e345725365c1016795eecff4a67e4c4c9@88.99.174.203:26656,14af04afc663427604e8dd53f4023f7963a255cb@116.203.81.174:26656,9c89e77d51561c8b23957eee85a81ccc99fa7d6b@128.140.3.188:26656,32fbefec592ac2ff9ecb3cad69bafaaad01e771a@148.251.235.130:20656"
+  #PEERS="8af9dd609cdc579f4f99dc7c73644debd230730e@91.107.239.79:26656,62fca204b5646483d8412105da3ce39bc2094018@116.203.81.174:26656,674408604533f6026fcaadb13dad04e2a78710b5@88.99.174.203:26656,6126217583efd35e3c618dfb5d5f0b7c427e4825@128.140.3.188:26656"
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
 
   # log
@@ -234,14 +246,14 @@ function setupNode() {
   # indexer
   echo "Setting Indexer..."
   sed -i -e "s/^indexer *=.*/indexer = \"null\"/" $CONFIG_PATH
-
+  sed -i -e "s/^indexer *=.*/indexer = \"null\"/" $HOME/.alignedlayer/config/config.toml
   # prometheus
   echo "Setting Prometheus..."
-  sed -i -e "s/prometheus = false/prometheus = true/" $CONFIG_PATH
+  sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 10/g' $CONFIG_PATH
+  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 40/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -250,7 +262,7 @@ function setupNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.001$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.0001$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
@@ -276,20 +288,20 @@ function installService() {
   if [ ! -f "/etc/systemd/system/$NODE_SERVICE_NAME.service" ]; then
 
     sudo tee /etc/systemd/system/$NODE_SERVICE_NAME.service <<EOF >/dev/null
-  [Unit]
-  Description=$NODE_SERVICE_NAME Node
-  After=network.target
+[Unit]
+Description=$NODE_SERVICE_NAME Node
+After=network.target
 
-  [Service]
-  User=$USER
-  Type=simple
-  ExecStart=$(which $NODE_DAEMON) start
-  Restart=on-failure
-  RestartSec=3
-  LimitNOFILE=65535
+[Service]
+User=$USER
+Type=simple
+ExecStart=$(which $NODE_DAEMON) start
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=65535
 
-  [Install]
-  WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 EOF
 
     # Enable systemd service
@@ -367,19 +379,16 @@ function createValidator() {
   echo ""
   echo -e "\e[1m\e[32mCreating Valdiator Tx with wallet $NODE_WALLET... \e[0m" && sleep 1
 
-  $NODE_DAEMON tx staking create-validator \
-    --amount=1000000$NODE_DENOM \
-    --pubkey=$($NODE_DAEMON tendermint show-validator) \
+  # alignedlayerd tx staking create-validator validator.json \
+  # --from aligned1cp3wxy6d3kjlt850rh9pjf0ma804fghp7fqrm8 \
+  # --node tcp://127.0.0.1:22657 \
+  # --fees 50stake \
+  # --chain-id alignedlayer
+
+  $NODE_DAEMON tx staking create-validator validator.json \
     --from="$NODE_WALLET" \
     --chain-id=$NODE_ID \
-    --moniker="$NODE_NAME" \
-    --commission-max-change-rate=0.01 \
-    --commission-max-rate=0.10 \
-    --commission-rate=0.05 \
-    --details="$YOUR_DETAIL" \
-    --website="$YOUR_WEBSITE" \
-    --identity "$YOUR_IDENTITY" \
-    --min-self-delegation="1000000" \
+    --fees 50$NODE_DENOM \
     --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
@@ -393,9 +402,9 @@ function downloadSnapshot() {
 
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
-  rm -rf $HOME/.aura/data
-  curl -o - -L https://aura.snapshot.stavr.tech/aura-snap.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.aura --strip-components 2
-  curl -o - -L https://aura.wasm.stavr.tech/wasm-aura.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.aura --strip-components 2
+  # curl -L $SNAPSHOT_PATH | tar -Ilz4 -xf - -C $HOME/$NODE_FOLDER
+  wget $(curl -s https://services.staketab.org/backend/aligned-testnet/ | jq -r .snap_link)
+  tar -xf $(curl -s https://services.staketab.org/backend/aligned-testnet/ | jq -r .snap_filename) -C $HOME/.alignedlayer/data/
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }
@@ -499,8 +508,8 @@ function helpfullCommand() {
 }
 
 function checksum() {
-  NODE_FOLDER=.aura
-  NODE_GENESIS_CHECKSUM=90b9404d38167e3b40f56ddc11a1565f0107b89008742425e44905871699febc
+  NODE_FOLDER=.ollo
+  NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
 
   if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
     echo "Genesis checksum is match"
@@ -530,4 +539,4 @@ main
 
 # Run:
 # On Mac: sh node-tool.sh
-# On Ubuntu: sudo chmod +x node.sh && ./node.sh
+# On Ubuntu: sudo chmod +x node-tool.sh && ./node-tool.sh

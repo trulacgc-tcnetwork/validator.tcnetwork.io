@@ -5,7 +5,7 @@ GO_VERSION=1.21.5
 
 # Node
 NODE_REPO=https://github.com/hypersign-protocol/hid-node.git
-NODE_VERSION=v0.2.0
+NODE_VERSION=v0.3.0
 NODE_REPO_FOLDER=hid-node
 NODE_DAEMON=hid-noded
 NODE_ID=prajna-1
@@ -21,9 +21,9 @@ NODE_ADDR_BOOK_FILE=https://snapshots.kjnodes.com/hypersign-testnet/addrbook.jso
 NODE_SERVICE_NAME=hid
 
 # Validator
-VALIDATOR_DETAIL=""
-VALIDATOR_WEBSITE=""
-VALIDATOR_IDENTITY=""
+VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://testnet.explorer.tcnetwork.io/"
+VALIDATOR_WEBSITE=https://tcnetwork.io
+VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
 SNAPSHOT_PATH=https://snapshots.kjnodes.com/hypersign-testnet/snapshot_latest.tar.lz4
@@ -539,10 +539,3 @@ main
 # Run:
 # On Mac: sh node-tool.sh
 # On Ubuntu: sudo chmod +x node-tool.sh && ./node-tool.sh
-
-# FAUCET_URL="https://faucet.testnet-2.nibiru.fi/"
-# ADDR="nibi1pzfy45z6ysd9c0fp83fczt6zhusulr45vcxww3" # X MUN
-# ADDR="nibi15a6my3yy7re9aspur592pdw0wdd4fvxakk92pz" #   Defund
-# ADDR="nibi1xr5980r6e7cy3u3pfm5xq2ruh5d3xy6akafmp0" #   Gitopia
-# ADDR="nibi16re2zprhnekq62qmcuh7v0dxtsa7le3n3s49ke" # X HyperSign
-# curl -X POST -d '{"address": "'"$ADDR"'", "coins": ["10000000unibi","100000000000unusd"]}' $FAUCET_URL

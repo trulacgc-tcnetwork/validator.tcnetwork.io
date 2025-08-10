@@ -35,7 +35,7 @@ Create a `~/restake/src/networks.local.json` file and specify the networks you w
   }
 ```
 
-**Note**: Note that REStake requires a node with indexing enabled and minimum gas prices matching the `networks.json` gas price (or your local override).
+**Note**: Note that ReStake requires a node with indexing enabled and minimum gas prices matching the `networks.json` gas price (or your local override).
 
 ## 4. Submiting your operator
 

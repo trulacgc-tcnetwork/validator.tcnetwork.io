@@ -1,21 +1,21 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.20.5
+GO_VERSION=1.22.2
 
 # Node
 NODE_REPO=https://github.com/sge-network/sge.git
-NODE_VERSION=v1.3.1
+NODE_VERSION=v1.7.4
 NODE_REPO_FOLDER=sge
 NODE_DAEMON=sged
 NODE_ID=sge-network-4
 NODE_DENOM=usge
 NODE_FOLDER=.sge
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Projects/SGE/Testnet/genesis.json
+NODE_GENESIS_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Sge/Testnet/genesis.json
 NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/obajay/nodes-Guides/main/Projects/SGE/Testnet/addrbook.json
+NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Sge/Testnet/addrbook.json
 
 # Service
 NODE_SERVICE_NAME=sge
@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=http://sge-t.snapshot.stavr.tech:1017/sget/sget-snap.tar.lz4
+SNAPSHOT_PATH=https://sge-t.snapshot.stavr.tech/sget-snap.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -198,15 +198,8 @@ function initNode() {
   cd $HOME
   echo -e "\e[1m\e[32mDownloading Genesis File... \e[0m" && sleep 1
 
-  if $NODE_GENESIS_ZIP; then
-    echo "Downloading zip file..."
-    curl -s $NODE_GENESIS_FILE -o $HOME/genesis.json.gz
-    gunzip $HOME/genesis.json.gz
-    sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
-  else
-    echo "Downloading plain genesis file..."
-    curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
-  fi
+  echo "Downloading plain genesis file..."
+  curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
@@ -223,8 +216,13 @@ function initNode() {
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
-  PEERS="145d0f311ef1485f5b95eebecbc758fce01b4bb6@38.146.3.184:17756,6caabc35628a51bbf9c80ead303f13b3dfae8674@50.19.180.153:26656,51e4e7b04d2f669f5efa53e8d95891fa04e4c5b9@206.125.33.62:26656,2b4efc999c6aaad3cb2456fa5385f16f90e2c3d2@95.217.106.215:11156,31bda14eacbc1c1c537c4b7c2e8d338a06c8c5fd@57.128.37.47:26656,ef9ac611d9ca1c3a9fae22199f449d7c1082a0d9@65.108.233.109:17756"
+  PEERS=""
   sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $CONFIG_PATH
+
+  # filter peer
+  sed -i -e "s/^filter_peers *=.*/filter_peers = \"true\"/" $CONFIG_PATH
+  external_address=$(wget -qO- eth0.me)
+  sed -i.bak -e "s/^external_address *=.*/external_address = \"$external_address:${NODE_PORT}656\"/" $CONFIG_PATH
 
   # log
   echo "Setting Log..."
@@ -245,7 +243,7 @@ function initNode() {
   # port
   echo "Setting Port..."
   sed -i.bak -e "s%^proxy_app = \"tcp://127.0.0.1:26658\"%proxy_app = \"tcp://127.0.0.1:${NODE_PORT}658\"%; s%^laddr = \"tcp://127.0.0.1:26657\"%laddr = \"tcp://127.0.0.1:${NODE_PORT}657\"%; s%^pprof_laddr = \"localhost:6060\"%pprof_laddr = \"localhost:${NODE_PORT}060\"%; s%^laddr = \"tcp://0.0.0.0:26656\"%laddr = \"tcp://0.0.0.0:${NODE_PORT}656\"%; s%^prometheus_listen_addr = \":26660\"%prometheus_listen_addr = \":${NODE_PORT}660\"%" $CONFIG_PATH
-  sed -i.bak -e "s%^address = \"tcp://0.0.0.0:1317\"%address = \"tcp://0.0.0.0:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"0.0.0.0:9090\"%address = \"0.0.0.0:${NODE_PORT}090\"%; s%^address = \"0.0.0.0:9091\"%address = \"0.0.0.0:${NODE_PORT}091\"%; s%^address = \"0.0.0.0:8545\"%address = \"0.0.0.0:${NODE_PORT}545\"%; s%^ws-address = \"0.0.0.0:8546\"%ws-address = \"0.0.0.0:${NODE_PORT}546\"%" $APP_PATH
+  sed -i.bak -e "s%^address = \"tcp://localhost:1317\"%address = \"tcp://localhost:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"localhost:9090\"%address = \"localhost:${NODE_PORT}090\"%; s%^address = \"localhost:9091\"%address = \"localhost:${NODE_PORT}091\"%; s%^address = \"0.0.0.0:8545\"%address = \"0.0.0.0:${NODE_PORT}545\"%; s%^ws-address = \"0.0.0.0:8546\"%ws-address = \"0.0.0.0:${NODE_PORT}546\"%" $APP_PATH
 
   # gas
   echo "Setting Minimum Gas..."

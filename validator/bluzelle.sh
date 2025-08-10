@@ -5,16 +5,16 @@ GO_VERSION=1.18
 
 # Node
 NODE_REPO=https://github.com/bluzelle/bluzelle-public
-NODE_VERSION=bluzelle-9
+NODE_VERSION=v10.2
 NODE_REPO_FOLDER=bluzelle
 NODE_DAEMON=curiumd
 NODE_ID=bluzelle-9
 NODE_DENOM=ubnt
 NODE_FOLDER=.curium
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=
+NODE_GENESIS_FILE=https://snapshot3.konsortech.xyz/bluzelle/genesis.json
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://files.chaintools.tech/chains/bluzelle/addrbook.json
+NODE_ADDR_BOOK_FILE=https://snapshot3.konsortech.xyz/bluzelle/addrbook.json
 
 # Service
 NODE_SERVICE_NAME=bluzelle
@@ -159,7 +159,9 @@ function installNode() {
   cd $HOME
 
   echo -e "\e[1m\e[32mInstalling Install Ignite... \e[0m" && sleep 1
-  curl https://get.ignite.com/cli! | bash
+  #curl https://get.ignite.com/cli! | bash
+  sudo curl https://get.ignite.com/cli | sudo bash
+  sudo mv ignite /usr/local/bin/
 
   echo -e "\e[1m\e[32mInstalling Node... \e[0m" && sleep 1
   cd $HOME
@@ -207,17 +209,12 @@ function initNode() {
     sudo mv $HOME/genesis.json $HOME/$NODE_FOLDER/config
   else
     echo "Downloading plain genesis file..."
-    #curl -s $NODE_GENESIS_FILE > $HOME/$NODE_FOLDER/config/genesis.json
-    #curl $NODE_GENESIS_FILE | jq -r '.result.genesis' >genesis.json
-    cd $HOME
-    mv genesis.json $HOME/$NODE_FOLDER/config
+    wget -O $HOME/$NODE_FOLDER/config/genesis.json $NODE_GENESIS_FILE
   fi
 
   # Download addrbook
   if $NODE_ADDR_BOOK; then
-    #wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
-    wget -O addrbook.json $NODE_ADDR_BOOK_FILE
-    mv addrbook.json $HOME/$NODE_FOLDER/config
+    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
   fi
 
   echo "Setting configuration..."

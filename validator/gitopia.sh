@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.19.1
+GO_VERSION=1.21.6
 
 # Node
-NODE_VERSION=v2.1.1
+NODE_VERSION=v5.1.0
 NODE_REPO=https://github.com/gitopia/gitopia.git
 NODE_REPO_FOLDER=gitopia
 NODE_DAEMON=gitopiad
@@ -15,7 +15,7 @@ NODE_GENESIS_ZIP=true
 NODE_GENESIS_FILE=https://github.com/gitopia/mainnet/raw/master/genesis.tar.gz
 NODE_GENESIS_CHECKSUM=
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots2.nodejumper.io/gitopia/addrbook.json
+NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Gitopia/addrbook.json
 
 # Service
 NODE_SERVICE_NAME=gitopia
@@ -26,7 +26,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots2.nodejumper.io/gitopia/gitopia_2023-07-15.tar.lz4
+SNAPSHOT_PATH=https://gitopia.snapshot.stavr.tech/gitopia-snap.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -383,7 +383,7 @@ function downloadSnapshot() {
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
   sudo rm -rf $HOME/$NODE_FOLDER/data
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+  curl -o - -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER --strip-components 2
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }

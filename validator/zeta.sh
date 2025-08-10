@@ -1,24 +1,23 @@
 #!/bin/bash
 
 # Go
-GO_VERSION=1.21.6
+GO_VERSION=1.20.5 #1.21.6
 
 # Node
-NODE_REPO=https://github.com/aura-nw/aura.git
-NODE_VERSION=v0.9.3
-NODE_REPO_FOLDER=aura
-NODE_DAEMON=aurad
-NODE_ID=aura_6322-2
-NODE_DENOM=uaura
-NODE_FOLDER=.aura
-NODE_GENESIS_ZIP=true
-NODE_GENESIS_FILE=https://images.aura.network/aura_6322-2-genesis.tar.gz
-NODE_GENESIS_CHECKSUM=
+NODE_REPO=https://github.com/zeta-chain/node.git
+NODE_VERSION=v17.0.0
+NODE_REPO_FOLDER=node
+NODE_DAEMON=zetacored
+NODE_ID=zetachain_7000-1
+NODE_DENOM=azeta
+NODE_FOLDER=.zetacored
+NODE_GENESIS_ZIP=false
+NODE_GENESIS_FILE=https://snapshots.nodejumper.io/zetachain/genesis.json
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Aura/addrbook.json
+NODE_ADDR_BOOK_FILE=https://snapshots.nodejumper.io/zetachain/addrbook.json
 
 # Service
-NODE_SERVICE_NAME=aura
+NODE_SERVICE_NAME=zeta
 
 # Validator
 VALIDATOR_DETAIL="Cosmos validator, Web3 builder, Staking & Tracking service provider. Staking UI https://explorer.tcnetwork.io/"
@@ -26,7 +25,7 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://aura.snapshot.stavr.tech/aura-snap.tar.lz4
+SNAPSHOT_PATH=https://snapshots.nodejumper.io/zetachain/zetachain_latest.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -46,8 +45,7 @@ function main {
   echo "[1] Install Library Dependencies"
   echo "[2] Install Go"
   echo "[3] Install Node"
-  echo "[4] Init Node"
-  echo "[4b] Setup Node (Genesis, Seed, Setting)"
+  echo "[4] Setup Node"
   echo "[5] Setup Service"
   echo "[6] Create/Import Wallet"
   echo "[7] Create validator"
@@ -75,10 +73,6 @@ function main {
     ;;
   "4")
     initNode
-    exit 0
-    ;;
-  "4b")
-    setupNode
     exit 0
     ;;
   "5")
@@ -166,6 +160,10 @@ function installNode() {
   git checkout $NODE_VERSION
   make install
 
+  $NODE_DAEMON config chain-id $NODE_ID
+  $NODE_DAEMON config keyring-backend file
+  $NODE_DAEMON config node tcp://localhost:25657
+
   echo -e "\e[1m\e[32mInstalling Node finished. \e[0m" && sleep 1
 }
 
@@ -192,27 +190,16 @@ function initNode() {
   # Initialize Node
   echo -e "\e[1m\e[32mInit Chain... \e[0m" && sleep 1
   $NODE_DAEMON init "$NODE_NAME" --chain-id=$NODE_ID
-}
 
-function setupNode() {
   # Download Genesis
   cd $HOME
   echo -e "\e[1m\e[32mDownloading Genesis File... \e[0m" && sleep 1
 
-  if $NODE_GENESIS_ZIP; then
-    echo "Downloading zip file..."
-    wget https://images.aura.network/aura_6322-2-genesis.tar.gz
-    tar -xzvf aura_6322-2-genesis.tar.gz
-    mv aura_6322-2-genesis.json $HOME/.aura/config/genesis.json
-  else
-    echo "Downloading plain genesis file..."
-    curl -s $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
-  fi
+  echo "Downloading genesis file..."
+  curl -Ls $NODE_GENESIS_FILE >$HOME/$NODE_FOLDER/config/genesis.json
 
-  # Download addrbook
-  if $NODE_ADDR_BOOK; then
-    wget -O $HOME/$NODE_FOLDER/config/addrbook.json $NODE_ADDR_BOOK_FILE
-  fi
+  echo "Downloading addrbook file..."
+  curl -Ls $NODE_ADDR_BOOK_FILE >$HOME/$NODE_FOLDER/config/addrbook.json
 
   echo "Setting configuration..."
   CONFIG_PATH="$HOME/$NODE_FOLDER/config/config.toml"
@@ -220,7 +207,7 @@ function setupNode() {
 
   # seed
   echo "Setting Seed..."
-  SEEDS=""
+  SEEDS="20e1000e88125698264454a884812746c2eb4807@seeds.lavenderfive.com:22556,1d41d344d3370d2ba54332de4967baa5cbd70a06@rpc.zetachain.nodestake.org:666,ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@seeds.polkachu.com:22556,8d93468c6022fb3b263963bdea46b0a131d247cd@34.28.196.79:26656,637077d431f618181597706810a65c826524fd74@zetachain.rpc.nodeshub.online:22556"
   sed -i.bak "s/^seeds *=.*/seeds = \"$SEEDS\"/;" $CONFIG_PATH
 
   # peer
@@ -237,11 +224,11 @@ function setupNode() {
 
   # prometheus
   echo "Setting Prometheus..."
-  sed -i -e "s/prometheus = false/prometheus = true/" $CONFIG_PATH
+  sed -i -e "s/prometheus = false/prometheus = false/" $CONFIG_PATH
 
   # inbound/outbound
-  sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
-  sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
+  #sed -i 's/max_num_inbound_peers =.*/max_num_inbound_peers = 100/g' $CONFIG_PATH
+  #sed -i 's/max_num_outbound_peers =.*/max_num_outbound_peers = 100/g' $CONFIG_PATH
 
   # port
   echo "Setting Port..."
@@ -250,14 +237,14 @@ function setupNode() {
 
   # gas
   echo "Setting Minimum Gas..."
-  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.001$NODE_DENOM\"/" $APP_PATH
+  sed -i -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"20000000000$NODE_DENOM\"/" $APP_PATH
 
   # pruning
   echo "Setting Prunching..."
   pruning="custom"
   pruning_keep_recent="100"
   pruning_keep_every="0"
-  pruning_interval="10"
+  pruning_interval="17"
   sed -i -e "s/^pruning *=.*/pruning = \"$pruning\"/" $APP_PATH
   sed -i -e "s/^pruning-keep-recent *=.*/pruning-keep-recent = \"$pruning_keep_recent\"/" $APP_PATH
   sed -i -e "s/^pruning-keep-every *=.*/pruning-keep-every = \"$pruning_keep_every\"/" $APP_PATH
@@ -368,7 +355,7 @@ function createValidator() {
   echo -e "\e[1m\e[32mCreating Valdiator Tx with wallet $NODE_WALLET... \e[0m" && sleep 1
 
   $NODE_DAEMON tx staking create-validator \
-    --amount=1000000$NODE_DENOM \
+    --amount=1000000000000000000$NODE_DENOM \
     --pubkey=$($NODE_DAEMON tendermint show-validator) \
     --from="$NODE_WALLET" \
     --chain-id=$NODE_ID \
@@ -380,6 +367,9 @@ function createValidator() {
     --website="$YOUR_WEBSITE" \
     --identity "$YOUR_IDENTITY" \
     --min-self-delegation="1000000" \
+    --gas="auto" \
+    --gas-adjustment=1.15 \
+    --fees="3000000000000000azeta" \
     --node=tcp://127.0.0.1:${NODE_PORT}657
 
   echo -e "\e[1m\e[32mCreate Valdiator successful. \e[0m" && sleep 1
@@ -393,9 +383,8 @@ function downloadSnapshot() {
 
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
-  rm -rf $HOME/.aura/data
-  curl -o - -L https://aura.snapshot.stavr.tech/aura-snap.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.aura --strip-components 2
-  curl -o - -L https://aura.wasm.stavr.tech/wasm-aura.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.aura --strip-components 2
+  $NODE_DAEMON tendermint unsafe-reset-all --home $HOME/$NODE_FOLDER --keep-addr-book
+  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }
@@ -499,8 +488,8 @@ function helpfullCommand() {
 }
 
 function checksum() {
-  NODE_FOLDER=.aura
-  NODE_GENESIS_CHECKSUM=90b9404d38167e3b40f56ddc11a1565f0107b89008742425e44905871699febc
+  NODE_FOLDER=.ollo
+  NODE_GENESIS_CHECKSUM=4852e73a212318cabaa6bf264e18e8aeeb42ee1e428addc0855341fad5dc7dae
 
   if [[ $(sha256sum "$HOME/$NODE_FOLDER/config/genesis.json" | cut -f 1 -d' ') == "$NODE_GENESIS_CHECKSUM" ]]; then
     echo "Genesis checksum is match"

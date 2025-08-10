@@ -12,9 +12,9 @@ NODE_ID=teritori-1
 NODE_DENOM=utori
 NODE_FOLDER=.teritorid
 NODE_GENESIS_ZIP=false
-NODE_GENESIS_FILE=https://snapshots.kjnodes.com/teritori/genesis.json
+NODE_GENESIS_FILE=https://media.githubusercontent.com/media/TERITORI/teritori-chain/v1.1.2/mainnet/teritori-1/genesis.json
 NODE_ADDR_BOOK=true
-NODE_ADDR_BOOK_FILE=https://snapshots.kjnodes.com/teritori/addrbook.json
+NODE_ADDR_BOOK_FILE=https://raw.githubusercontent.com/111STAVR111/props/main/Teritori/addrbook.json
 
 # Service
 NODE_SERVICE_NAME=teritori
@@ -25,7 +25,8 @@ VALIDATOR_WEBSITE=https://tcnetwork.io
 VALIDATOR_IDENTITY=C149D23D5257C23C
 
 # Snapshot
-SNAPSHOT_PATH=https://snapshots.kjnodes.com/teritori/snapshot_latest.tar.lz4
+#SNAPSHOT_PATH=https://snapshots.kjnodes.com/teritori/snapshot_latest.tar.lz4
+SNAPSHOT_PATH=http://teritori.snapshot.stavr.tech:1001/teritori-snap.tar.lz4
 
 # Upgrade
 UPGRADE_PATH=
@@ -240,7 +241,7 @@ function initNode() {
   # port
   echo "Setting Port..."
   sed -i.bak -e "s%^proxy_app = \"tcp://127.0.0.1:26658\"%proxy_app = \"tcp://127.0.0.1:${NODE_PORT}658\"%; s%^laddr = \"tcp://127.0.0.1:26657\"%laddr = \"tcp://127.0.0.1:${NODE_PORT}657\"%; s%^pprof_laddr = \"localhost:6060\"%pprof_laddr = \"localhost:${NODE_PORT}060\"%; s%^laddr = \"tcp://0.0.0.0:26656\"%laddr = \"tcp://0.0.0.0:${NODE_PORT}656\"%; s%^prometheus_listen_addr = \":26660\"%prometheus_listen_addr = \":${NODE_PORT}660\"%" $CONFIG_PATH
-  sed -i.bak -e "s%^address = \"tcp://0.0.0.0:1317\"%address = \"tcp://0.0.0.0:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"0.0.0.0:9090\"%address = \"0.0.0.0:${NODE_PORT}090\"%; s%^address = \"0.0.0.0:9091\"%address = \"0.0.0.0:${NODE_PORT}091\"%; s%^address = \"0.0.0.0:8545\"%address = \"0.0.0.0:${NODE_PORT}545\"%; s%^ws-address = \"0.0.0.0:8546\"%ws-address = \"0.0.0.0:${NODE_PORT}546\"%" $APP_PATH
+  sed -i.bak -e "s%^address = \"tcp://localhost:1317\"%address = \"tcp://localhost:${NODE_PORT}317\"%; s%^address = \":8080\"%address = \":${NODE_PORT}080\"%; s%^address = \"localhost:9090\"%address = \"localhost:${NODE_PORT}090\"%; s%^address = \"localhost:9091\"%address = \"localhost:${NODE_PORT}091\"%; s%^address = \"0.0.0.0:8545\"%address = \"0.0.0.0:${NODE_PORT}545\"%; s%^ws-address = \"0.0.0.0:8546\"%ws-address = \"0.0.0.0:${NODE_PORT}546\"%" $APP_PATH
 
   # gas
   echo "Setting Minimum Gas..."
@@ -387,8 +388,11 @@ function downloadSnapshot() {
 
   echo -e "\e[1m\e[32mDownloading snapshot... \e[0m" && sleep 1
 
-  $NODE_DAEMON tendermint unsafe-reset-all --home $HOME/$NODE_FOLDER --keep-addr-book
-  curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+  #$NODE_DAEMON tendermint unsafe-reset-all --home $HOME/$NODE_FOLDER --keep-addr-book
+  #curl -L $SNAPSHOT_PATH | lz4 -dc - | tar -xf - -C $HOME/$NODE_FOLDER
+
+  rm -rf $HOME/$NODE_FOLDER/data
+  curl -o - -L $SNAPSHOT_PATH | lz4 -c -d - | tar -x -C $HOME/$NODE_FOLDER --strip-components 2
 
   echo -e "\e[1m\e[32mDownload snapshot finished. \e[0m" && sleep 1
 }
